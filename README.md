@@ -4,11 +4,11 @@
 
 ## 特性
 
+- **开箱即用** — `AntdWorkspace` + `windows` 映射，最少配置即可运行
 - **零 UI 框架依赖** — 不依赖 antd，仅 React + CSS
 - **多窗口标签页** — 打开、切换、关闭、最小化
 - **标签拖拽排序** — 水平拖动标签调整顺序
 - **浮动窗口** — 拖出为独立窗口，可调整大小，拖回标签栏还原
-- **键盘快捷键** — `Ctrl/Cmd+W` 关闭，`Ctrl/Cmd+Tab` 切换
 - **CSS 主题变量** — 支持亮色/暗色主题定制
 - **URL 状态同步** — 刷新恢复、分享链接
 - **localStorage 持久化** — 浮动窗口位置自动保存
@@ -17,7 +17,7 @@
 ## 安装
 
 ```bash
-yarn add react-workspace
+yarn add @liuman/react-workspace
 ```
 
 ### Peer Dependencies
@@ -30,50 +30,91 @@ yarn add react-router-dom
 
 ## 快速开始
 
+### 开箱即用（Ant Design，推荐）
+
+```bash
+yarn add @liuman/react-workspace antd @ant-design/icons
+```
+
 ```tsx
-import { Workspace } from 'react-workspace';
-import 'react-workspace/style.css';
+import { AntdWorkspace } from '@liuman/react-workspace/antd';
+import '@liuman/react-workspace/style.css';
+
+function HomePage() {
+  return <div style={{ padding: 24 }}>欢迎！</div>;
+}
+
+export default function App() {
+  return (
+    <AntdWorkspace
+      menuItems={[
+        { key: 'home', label: '首页', windowType: 'home' },
+      ]}
+      windows={{ home: HomePage }}
+    />
+  );
+}
+```
+
+`AntdWorkspace` 已内置：ConfigProvider、Ant Design 侧边栏、主题同步。  
+`defaultWindow` 会自动从 `menuItems` 第一项推断，无需手动配置。
+
+### 零依赖用法
+
+```tsx
+import { Workspace } from '@liuman/react-workspace';
+import '@liuman/react-workspace/style.css';
+
+function HomePage() {
+  return <div style={{ padding: 24 }}>欢迎！</div>;
+}
+
+export default function App() {
+  return (
+    <Workspace
+      menuItems={[
+        { key: 'home', label: '首页', windowType: 'home' },
+      ]}
+      windows={{ home: HomePage }}
+    />
+  );
+}
+```
+
+### 完整示例（URL 同步 + 自定义区域）
+
+```tsx
+import { Workspace } from '@liuman/react-workspace';
+import '@liuman/react-workspace/style.css';
 import { useSearchParams } from 'react-router-dom';
 import { HomeOutlined, SettingOutlined } from '@ant-design/icons';
+
+function HomePage() {
+  return <div style={{ padding: 24 }}>欢迎！</div>;
+}
+
+function SettingsPage() {
+  return <div style={{ padding: 24 }}>设置页面</div>;
+}
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const menuItems = [
-    {
-      key: 'home',
-      icon: <HomeOutlined />,
-      label: '首页',
-      windowType: 'home',
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: '设置',
-      windowType: 'settings',
-    },
+    { key: 'home', icon: <HomeOutlined />, label: '首页', windowType: 'home' },
+    { key: 'settings', icon: <SettingOutlined />, label: '设置', windowType: 'settings' },
   ];
 
   return (
     <Workspace
       workspaceId="my-app"
       menuItems={menuItems}
-      defaultWindow={{ type: 'home', title: '首页' }}
+      windows={{ home: HomePage, settings: SettingsPage }}
       syncToUrl
       searchParams={searchParams}
       setSearchParams={setSearchParams}
       sidebarHeader={<div>我的工作区</div>}
       sidebarFooter={<div>用户信息</div>}
-      renderWindow={(window, ctx) => {
-        switch (window.type) {
-          case 'home':
-            return <div style={{ padding: 24 }}>欢迎！</div>;
-          case 'settings':
-            return <div style={{ padding: 24 }}>设置页面</div>;
-          default:
-            return <div>未知窗口: {window.type}</div>;
-        }
-      }}
     />
   );
 }
@@ -85,10 +126,11 @@ function App() {
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `workspaceId` | `string` | 必填 | 工作区唯一标识，用于 localStorage 隔离 |
+| `workspaceId` | `string` | `'default'` | 工作区唯一标识，用于 localStorage 隔离 |
 | `menuItems` | `SidebarMenuEntry[]` | 必填 | 侧边栏菜单（支持 `{ type: 'divider' }` 分隔线） |
-| `renderWindow` | `(window, ctx) => ReactNode` | 必填 | 渲染窗口内容 |
-| `defaultWindow` | `{ type, title }` | `{ type: 'home', title: '首页' }` | 默认打开的窗口 |
+| `windows` | `Record<string, Component>` | - | 窗口类型 → 组件映射（推荐，与 renderWindow 二选一） |
+| `renderWindow` | `(window, ctx) => ReactNode` | - | 自定义渲染窗口（与 windows 二选一） |
+| `defaultWindow` | `{ type, title }` | 自动从菜单推断 | 默认打开的窗口 |
 | `sidebarHeader` | `ReactNode` | - | 侧边栏顶部区域 |
 | `sidebarFooter` | `ReactNode` | - | 侧边栏底部区域（固定底部） |
 | `loading` | `boolean` | `false` | 加载状态 |
@@ -100,17 +142,27 @@ function App() {
 | `ref` | `WorkspaceRef` | - | 暴露完整工作区 API |
 | `siderWidth` | `number` | `240` | 侧边栏宽度 |
 | `contentBackground` | `string` | `#f0f2f5` | 内容区背景色 |
-| `enableKeyboardShortcuts` | `boolean` | `true` | Ctrl+W / Ctrl+Tab |
 | `themeClassName` | `string` | - | 如 `rw-theme-dark` 启用暗色主题 |
 | `theme` | `WorkspaceTheme` | - | 通过 props 覆盖 CSS 变量（可与 antd token 映射） |
 | `renderSidebar` | `(props) => ReactNode` | - | 自定义侧边栏，例如 Ant Design Menu |
 
-### 与 Ant Design 集成
+### `<AntdWorkspace />`（`@liuman/react-workspace/antd`）
+
+在 `Workspace` 基础上内置 ConfigProvider、Ant Design 侧边栏与主题同步。  
+Props 与 `Workspace` 相同（除 `renderSidebar` / `theme` / `themeClassName`），额外支持：
+
+| 属性 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `dark` | `boolean` | `false` | 暗色模式 |
+| `sidebarTheme` | `'light' \| 'dark'` | 跟随 `dark` | 侧边栏主题 |
+| `antdTheme` | `ThemeConfig` | - | 透传给 antd ConfigProvider |
+
+### 与 Ant Design 手动集成
 
 库核心**零 antd 依赖**，但可无缝配合 Ant Design 使用：
 
 ```bash
-yarn add react-workspace antd @ant-design/icons
+yarn add @liuman/react-workspace antd @ant-design/icons
 ```
 
 #### 1. 主题同步（推荐）
@@ -119,8 +171,8 @@ yarn add react-workspace antd @ant-design/icons
 
 ```tsx
 import { ConfigProvider, theme } from 'antd';
-import { Workspace, mapAntdTokenToWorkspaceTheme } from 'react-workspace';
-import 'react-workspace/style.css';
+import { Workspace, mapAntdTokenToWorkspaceTheme } from '@liuman/react-workspace';
+import '@liuman/react-workspace/style.css';
 
 function ThemedApp() {
   const { token } = theme.useToken();
@@ -148,7 +200,7 @@ export default function App() {
 #### 2. 使用 Ant Design 侧边栏
 
 ```tsx
-import { AntdWorkspaceSidebar } from 'react-workspace/antd';
+import { AntdWorkspaceSidebar } from '@liuman/react-workspace/antd';
 
 <Workspace
   renderSidebar={(props) => (
@@ -184,14 +236,6 @@ renderWindow={(window) => {
 ```tsx
 <Workspace className="my-workspace" themeClassName="rw-theme-dark" ... />
 ```
-
-### 快捷键
-
-| 快捷键 | 操作 |
-|--------|------|
-| `Ctrl/Cmd + W` | 关闭当前窗口 |
-| `Ctrl/Cmd + Tab` | 切换到下一个窗口 |
-| `Ctrl/Cmd + Shift + Tab` | 切换到上一个窗口 |
 
 ### 主题定制
 
@@ -231,7 +275,7 @@ function MyPage() {
 如需更细粒度控制，可直接使用 hook：
 
 ```tsx
-import { useWorkspace, WindowManager, WorkspaceSidebar } from 'react-workspace';
+import { useWorkspace, WindowManager, WorkspaceSidebar } from '@liuman/react-workspace';
 
 const workspace = useWorkspace({
   workspaceId: 'my-app',
@@ -281,7 +325,7 @@ interface WindowRenderContext {
 ### 工具函数
 
 ```typescript
-import { resolveWindowTitle, findMenuItem, collectParentMenuKeys } from 'react-workspace';
+import { resolveWindowTitle, findMenuItem, collectParentMenuKeys } from '@liuman/react-workspace';
 ```
 
 ### 类型定义
@@ -434,27 +478,29 @@ cd packages/react-workspace
 # 1. 注册 npm 账号 https://www.npmjs.com/signup
 npm login
 
-# 2. 确认包名未被占用（react-workspace 可能已被占用，可改用 scoped 名）
-#    修改 package.json: "name": "@mxyg/react-workspace"
+# 2. package.json 包名为 @liuman/react-workspace（react-workspace 已被他人占用）
 
-# 3. 发布
+# 3. 发布（需已开启 2FA，并带 OTP）
 yarn build
-npm publish --access public
+npm publish --access public --otp=你的6位验证码
 ```
 
 安装方式：
 
 ```bash
-# 公开包名
-yarn add react-workspace
-
-# scoped 包名
-yarn add @mxyg/react-workspace
+yarn add @liuman/react-workspace
 ```
 
 ---
 
 ## 版本历史
+
+### v1.3.0
+- 新增 `AntdWorkspace` 开箱即用组件
+- 新增 `windows` 映射表，简化调用（无需手写 renderWindow switch）
+- `defaultWindow` 自动从菜单推断
+- 移除键盘快捷键；优化标签关闭按钮与暗色主题
+- 修复浮动窗口拖出时超出屏幕问题
 
 ### v1.2.0
 - 修复侧边栏 footer 遮挡菜单、loading 遮罩覆盖侧边栏等问题

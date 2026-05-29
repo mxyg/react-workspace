@@ -15,7 +15,6 @@ export { WindowTabs } from './components/WindowTabs';
 export { FloatingWindow } from './components/FloatingWindow';
 export { WindowContainer } from './components/WindowContainer';
 export { useWorkspace } from './hooks/useWorkspace';
-export { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 export { WorkspaceProvider, useWorkspaceContext, useWorkspaceContextOptional } from './context/WorkspaceContext';
 
 export type {
@@ -33,6 +32,9 @@ export type {
   WorkspaceProps,
   WorkspaceRef,
   WorkspaceSidebarRenderProps,
+  WindowPanelProps,
+  WindowPanelComponent,
+  WorkspaceWindowsMap,
 } from './types';
 
 export type { WindowTabsProps } from './components/WindowTabs';
@@ -41,7 +43,6 @@ export type { WindowContainerProps } from './components/WindowContainer';
 export type { WindowManagerProps } from './components/WindowManager';
 export type { WorkspaceSidebarProps } from './components/WorkspaceSidebar';
 export type { WorkspaceContextValue } from './context/WorkspaceContext';
-export type { KeyboardShortcutsOptions } from './hooks/useKeyboardShortcuts';
 
 export {
   fixWindowPosition,
@@ -58,6 +59,10 @@ export {
   collectParentMenuKeys,
   labelToString,
 } from './utils/menuUtils';
+
+export { createWindowRenderer } from './utils/createWindowRenderer';
+export type { CreateWindowRendererOptions } from './utils/createWindowRenderer';
+export { resolveDefaultWindow, findFirstMenuItemWithWindowType } from './utils/resolveDefaultWindow';
 
 export {
   themeToCssVars,

@@ -81,8 +81,16 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
 
   useEffect(() => {
     if (isDragging || isResizing || win.pendingDragStart) return;
-    const fixed = fixWindowPosition(position);
-    if (fixed.x !== position.x || fixed.y !== position.y) onUpdateFloatingPosition(win.id, fixed);
+    const fitOptions = { minWidth: fd.minWidth, minHeight: fd.minHeight };
+    const fixed = fixWindowPosition(position, fitOptions);
+    if (
+      fixed.x !== position.x
+      || fixed.y !== position.y
+      || fixed.width !== position.width
+      || fixed.height !== position.height
+    ) {
+      onUpdateFloatingPosition(win.id, fixed);
+    }
   }, [win.id, win.pendingDragStart]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -117,7 +125,6 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
   }, [position, win.id, onFocusWindow]);
 
   useEffect(() => {
-    const minV = 100;
     const onMove = (e: MouseEvent) => {
       if (isDragging) {
         e.preventDefault();
@@ -130,8 +137,10 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
           if (over) tabs.dispatchEvent(new CustomEvent('floatingWindowDragOver', { detail: { ...dragToRestoreRef.current, clientX: e.clientX, clientY: e.clientY } }));
           else if (was) tabs.dispatchEvent(new CustomEvent('clearFloatingWindowPreview'));
         }
-        const nx = Math.max(-dragStartRef.current.startWidth + minV, Math.min(e.clientX - dragStartRef.current.x, globalThis.window.innerWidth - minV));
-        const ny = Math.max(0, Math.min(e.clientY - dragStartRef.current.y, globalThis.window.innerHeight - minV));
+        const w = dragStartRef.current.startWidth;
+        const h = dragStartRef.current.startHeight;
+        const nx = Math.max(0, Math.min(e.clientX - dragStartRef.current.x, globalThis.window.innerWidth - w));
+        const ny = Math.max(0, Math.min(e.clientY - dragStartRef.current.y, globalThis.window.innerHeight - h));
         windowRef.current!.style.transform = `translate(${nx}px, ${ny}px)`;
         pendingPositionRef.current = { x: nx, y: ny, width: dragStartRef.current.startWidth, height: dragStartRef.current.startHeight };
       } else if (isResizing) {
@@ -175,7 +184,9 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
         }
       }
       let fp = pendingPositionRef.current;
-      if (isResizing && fp) fp = fixWindowPosition(fp);
+      if (fp) {
+        fp = fixWindowPosition(fp, { minWidth: fd.minWidth, minHeight: fd.minHeight });
+      }
       if (fp) onUpdateFloatingPosition(win.id, fp);
       pendingPositionRef.current = null;
       dragToRestoreRef.current = null;

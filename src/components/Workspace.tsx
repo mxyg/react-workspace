@@ -5,11 +5,12 @@
 import React, { useCallback, useMemo, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { Spinner } from '../ui/Spinner';
 import { useWorkspace } from '../hooks/useWorkspace';
-import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { WorkspaceProvider } from '../context/WorkspaceContext';
 import WorkspaceSidebar from './WorkspaceSidebar';
 import WindowManager from './WindowManager';
 import { resolveWindowTitle, collectParentMenuKeys } from '../utils/menuUtils';
+import { resolveDefaultWindow } from '../utils/resolveDefaultWindow';
+import { createWindowRenderer } from '../utils/createWindowRenderer';
 import { themeToCssVars } from '../utils/theme';
 import type { WorkspaceProps, WorkspaceRef, WindowConfig, WindowRenderContext, WorkspaceSidebarRenderProps } from '../types';
 import '../styles/theme.css';
@@ -17,12 +18,13 @@ import '../styles/workspace.css';
 
 export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Workspace(
   {
-    workspaceId,
+    workspaceId = 'default',
     menuItems,
-    renderWindow,
+    renderWindow: renderWindowProp,
+    windows: windowsMap,
     sidebarHeader,
     sidebarFooter,
-    defaultWindow,
+    defaultWindow: defaultWindowProp,
     loading = false,
     loadingTip = '加载中...',
     onAction,
@@ -37,7 +39,6 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
     onReady,
     siderWidth = 240,
     contentBackground,
-    enableKeyboardShortcuts = true,
     themeClassName,
     theme,
     renderSidebar,
@@ -46,6 +47,17 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
   },
   ref,
 ) {
+  const defaultWindow = useMemo(
+    () => resolveDefaultWindow(menuItems, defaultWindowProp),
+    [menuItems, defaultWindowProp],
+  );
+
+  const renderWindow = useMemo(() => {
+    if (renderWindowProp) return renderWindowProp;
+    if (windowsMap) return createWindowRenderer(windowsMap);
+    throw new Error('[react-workspace] 请提供 renderWindow 或 windows');
+  }, [renderWindowProp, windowsMap]);
+
   const workspace = useWorkspace({
     workspaceId,
     defaultWindow,
@@ -73,14 +85,6 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
     clearPendingAction,
     reorderWindows,
   } = workspace;
-
-  useKeyboardShortcuts({
-    enabled: enableKeyboardShortcuts,
-    windows,
-    activeWindowId,
-    onSwitchWindow: switchWindow,
-    onCloseWindow: closeWindow,
-  });
 
   const workspaceApi: WorkspaceRef = { workspaceId, ...workspace };
   useImperativeHandle(ref, () => workspaceApi, [workspaceId, windows, activeWindowId]);

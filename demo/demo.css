@@ -1,17 +1,8 @@
 * { box-sizing: border-box; }
 body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 
-.demo-app { height: 100vh; display: flex; flex-direction: column; }
-.demo-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
-  background: var(--rw-color-bg);
-  border-bottom: 1px solid var(--rw-color-border);
-  flex-shrink: 0;
-}
-.demo-app .rw-workspace { flex: 1; min-height: 0; height: auto !important; }
+.demo-app { height: 100vh; background: #f0f2f5; }
+.demo-app.demo-app-dark { background: #000000; }
 
 .demo-panel { padding: 24px; color: var(--rw-color-text); }
 .demo-panel h2, .demo-panel h3, .demo-panel h4 { margin-top: 0; }
@@ -25,7 +16,19 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Ro
 }
 
 .demo-header { display: flex; flex-direction: column; gap: 4px; }
-.demo-footer { font-size: 12px; text-align: center; padding: 4px 0; }
+.demo-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 4px 0;
+}
+.demo-footer-theme {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .demo-footer a { color: var(--rw-color-text-secondary); text-decoration: none; }
 .demo-footer a:hover { color: var(--rw-color-primary); }
 

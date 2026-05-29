@@ -4,7 +4,7 @@
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Dropdown, type DropdownItem } from '../ui/Dropdown';
-import { IconClose, IconMinus, IconFloat, IconMore } from '../ui/Icons';
+import { IconClose, IconMore } from '../ui/Icons';
 import type { WindowConfig, BatchWindowAction } from '../types';
 import '../styles/window-tabs.css';
 
@@ -66,7 +66,7 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
 
   const handleTabMouseDown = useCallback(
     (e: React.MouseEvent, windowId: string, index: number) => {
-      if ((e.target as HTMLElement).closest('.rw-window-tab-action-btn')) return;
+      if ((e.target as HTMLElement).closest('.rw-window-tab-close-btn')) return;
       if (e.button !== 0) return;
 
       dragRef.current = { windowId, startX: e.clientX, startY: e.clientY, fromIndex: index, mode: 'none', floated: false };
@@ -205,17 +205,14 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
               onMouseDown={(e) => handleTabMouseDown(e, win.id, index)}
             >
               <span className="rw-tab-title">{win.title}</span>
-              <div className="rw-window-tab-actions">
-                <button type="button" title="浮动窗口" className="rw-icon-btn rw-window-tab-action-btn" onClick={(e) => { e.stopPropagation(); onFloatWindow?.(win.id); }}>
-                  <IconFloat size={12} />
-                </button>
-                <button type="button" title="最小化" className="rw-icon-btn rw-window-tab-action-btn" onClick={(e) => { e.stopPropagation(); onToggleMinimize(win.id); }}>
-                  <IconMinus size={12} />
-                </button>
-                <button type="button" title="关闭" className="rw-icon-btn rw-window-tab-action-btn" onClick={(e) => { e.stopPropagation(); onCloseWindow(win.id); }}>
-                  <IconClose size={12} />
-                </button>
-              </div>
+              <button
+                type="button"
+                title="关闭"
+                className="rw-icon-btn rw-window-tab-close-btn"
+                onClick={(e) => { e.stopPropagation(); onCloseWindow(win.id); }}
+              >
+                <IconClose size={12} />
+              </button>
             </div>
           ))}
           {floatPreview && reorderInsertIndex !== null && (

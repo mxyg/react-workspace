@@ -21,3 +21,11 @@
   position: relative;
   flex-shrink: 0;
 }
+
+.rw-antd-sidebar .ant-layout-sider-dark .rw-workspace-sidebar-header {
+  background: var(--rw-color-bg-secondary);
+}
+
+.rw-antd-sidebar .ant-layout-sider-dark .rw-workspace-sidebar-footer {
+  background: var(--rw-color-bg);
+}

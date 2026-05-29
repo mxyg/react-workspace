@@ -60,4 +60,5 @@
   --rw-color-text: rgba(255, 255, 255, 0.85);
   --rw-color-text-secondary: rgba(255, 255, 255, 0.65);
   --rw-color-text-muted: rgba(255, 255, 255, 0.45);
+  --rw-sidebar-header-bg: var(--rw-color-bg-secondary);
 }

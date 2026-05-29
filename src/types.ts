@@ -2,7 +2,7 @@
  * react-workspace 类型定义
  */
 
-import type { ReactNode, Dispatch, SetStateAction, CSSProperties, Ref } from 'react';
+import type { ReactNode, Dispatch, SetStateAction, CSSProperties, Ref, ComponentType } from 'react';
 import type { WorkspaceTheme } from './utils/theme';
 
 /** 窗口位置和大小 */
@@ -150,13 +150,32 @@ export interface WorkspaceSidebarRenderProps {
   siderWidth?: number;
 }
 
+/** 窗口面板组件接收的 props */
+export interface WindowPanelProps {
+  window: WindowConfig;
+  ctx: WindowRenderContext;
+}
+
+/** 窗口类型 → 面板组件映射（开箱即用） */
+export type WindowPanelComponent = ComponentType<WindowPanelProps>;
+export type WorkspaceWindowsMap = Record<string, WindowPanelComponent>;
+
 /** Workspace 组件 Props */
 export interface WorkspaceProps {
-  workspaceId: string;
+  /** 工作区唯一标识，用于 localStorage / URL 隔离，默认 `default` */
+  workspaceId?: string;
   /** 侧边栏菜单项 */
   menuItems: SidebarMenuEntry[];
-  /** 渲染窗口内容 */
-  renderWindow: (window: WindowConfig, context: WindowRenderContext) => ReactNode;
+  /**
+   * 渲染窗口内容（与 windows 二选一）
+   * 需要完全自定义渲染逻辑时使用
+   */
+  renderWindow?: (window: WindowConfig, context: WindowRenderContext) => ReactNode;
+  /**
+   * 窗口类型 → 组件映射（与 renderWindow 二选一，推荐）
+   * @example windows={{ home: HomePage, settings: SettingsPage }}
+   */
+  windows?: WorkspaceWindowsMap;
   /** 侧边栏顶部区域（如项目切换器） */
   sidebarHeader?: ReactNode;
   /** 侧边栏底部区域（如用户信息） */
@@ -189,8 +208,6 @@ export interface WorkspaceProps {
   siderWidth?: number;
   /** 内容区背景色 */
   contentBackground?: string;
-  /** 是否启用快捷键 Ctrl+W / Ctrl+Tab */
-  enableKeyboardShortcuts?: boolean;
   /** 主题 class，如 rw-theme-dark */
   themeClassName?: string;
   /** 通过 props 覆盖 CSS 变量主题（可与 antd token 映射配合） */

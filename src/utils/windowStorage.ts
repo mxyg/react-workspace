@@ -2,36 +2,34 @@ import type { WindowPosition } from '../types';
 
 const MIN_VISIBLE_SIZE = 100;
 
-/** 检测并修复窗口位置，确保至少保留一个角落可见 */
-export function fixWindowPosition(position: WindowPosition): WindowPosition {
+export interface FixWindowPositionOptions {
+  minWidth?: number;
+  minHeight?: number;
+}
+
+/** 检测并修复窗口位置与尺寸，确保窗口完整落在视口内 */
+export function fixWindowPosition(
+  position: WindowPosition,
+  options?: FixWindowPositionOptions,
+): WindowPosition {
   const viewportWidth = globalThis.window.innerWidth;
   const viewportHeight = globalThis.window.innerHeight;
+  const minWidth = Math.min(options?.minWidth ?? MIN_VISIBLE_SIZE, viewportWidth);
+  const minHeight = Math.min(options?.minHeight ?? MIN_VISIBLE_SIZE, viewportHeight);
 
-  let newX = position.x;
-  let newY = position.y;
-  let needsFix = false;
+  let { x, y, width, height } = position;
 
-  if (position.x + position.width < MIN_VISIBLE_SIZE) {
-    newX = -position.width + MIN_VISIBLE_SIZE;
-    needsFix = true;
-  } else if (position.x > viewportWidth - MIN_VISIBLE_SIZE) {
-    newX = viewportWidth - MIN_VISIBLE_SIZE;
-    needsFix = true;
-  }
+  width = Math.min(width, viewportWidth);
+  height = Math.min(height, viewportHeight);
+  width = Math.max(width, minWidth);
+  height = Math.max(height, minHeight);
 
-  if (position.y < 0) {
-    newY = 0;
-    needsFix = true;
-  } else if (position.y > viewportHeight - MIN_VISIBLE_SIZE) {
-    newY = viewportHeight - MIN_VISIBLE_SIZE;
-    needsFix = true;
-  }
+  if (x + width > viewportWidth) x = Math.max(0, viewportWidth - width);
+  if (y + height > viewportHeight) y = Math.max(0, viewportHeight - height);
+  if (x < 0) x = 0;
+  if (y < 0) y = 0;
 
-  if (needsFix) {
-    return { x: newX, y: newY, width: position.width, height: position.height };
-  }
-
-  return position;
+  return { x, y, width, height };
 }
 
 export interface WindowState {
