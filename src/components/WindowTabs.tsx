@@ -46,7 +46,8 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
     startY: number;
     fromIndex: number;
     mode: 'none' | 'reorder' | 'float';
-  }>({ windowId: '', startX: 0, startY: 0, fromIndex: -1, mode: 'none' });
+    floated: boolean;
+  }>({ windowId: '', startX: 0, startY: 0, fromIndex: -1, mode: 'none', floated: false });
 
   const calcInsertIndex = useCallback((clientX: number): number => {
     const list = tabListRef.current;
@@ -68,7 +69,7 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
       if ((e.target as HTMLElement).closest('.rw-window-tab-action-btn')) return;
       if (e.button !== 0) return;
 
-      dragRef.current = { windowId, startX: e.clientX, startY: e.clientY, fromIndex: index, mode: 'none' };
+      dragRef.current = { windowId, startX: e.clientX, startY: e.clientY, fromIndex: index, mode: 'none', floated: false };
 
       const handleMouseMove = (ev: MouseEvent) => {
         const dx = ev.clientX - dragRef.current.startX;
@@ -87,8 +88,11 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
         }
 
         if (dragRef.current.mode === 'float' && dragRef.current.windowId === windowId) {
-          onFloatWindow?.(windowId, { x: ev.clientX, y: ev.clientY });
-          cleanup();
+          if (!dragRef.current.floated) {
+            dragRef.current.floated = true;
+            onFloatWindow?.(windowId, { x: ev.clientX, y: ev.clientY });
+          }
+          // 不立即移除监听，等 mouseup 时由浮动窗口接管拖动
         } else if (dragRef.current.mode === 'reorder') {
           setReorderInsertIndex(calcInsertIndex(ev.clientX));
         }
@@ -110,7 +114,7 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
       const cleanup = () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
-        dragRef.current = { windowId: '', startX: 0, startY: 0, fromIndex: -1, mode: 'none' };
+        dragRef.current = { windowId: '', startX: 0, startY: 0, fromIndex: -1, mode: 'none', floated: false };
       };
 
       document.addEventListener('mousemove', handleMouseMove);

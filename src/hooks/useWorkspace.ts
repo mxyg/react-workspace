@@ -279,6 +279,7 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
     (windowId: string, mousePosition?: { x: number; y: number }) => {
       const target = windows.find((w) => w.id === windowId);
       if (!target || !workspaceId) return;
+      if (target.floating) return;
 
       const normalWindows = windows.filter((w) => !w.floating && !w.minimized);
       if (normalWindows.length === 1 && normalWindows[0].id === windowId) return;
@@ -287,17 +288,17 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
       let initialPosition: WindowPosition = { x: fd.x, y: fd.y, width: fd.width, height: fd.height };
 
       if (mousePosition) {
-        initialPosition = {
+        initialPosition = fixWindowPosition({
           x: mousePosition.x - fd.width / 2,
-          y: mousePosition.y - 40,
+          y: Math.max(0, mousePosition.y - 40),
           width: fd.width,
           height: fd.height,
-        };
+        });
       } else if (target.floatingPosition) {
         initialPosition = fixWindowPosition(target.floatingPosition);
       } else {
         const stored = getWindowPosition(target.type);
-        if (stored) initialPosition = stored;
+        if (stored) initialPosition = fixWindowPosition(stored);
       }
 
       updateTabClickOrder(storageKeyPrefix, workspaceId, target.type);

@@ -1,6 +1,6 @@
 {
   "name": "react-workspace",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Zero-dependency React IDE-like multi-window workspace with tabs, floating windows, keyboard shortcuts, theming, and optional Ant Design integration",
   "type": "module",
   "main": "./dist/react-workspace.cjs",

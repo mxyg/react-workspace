@@ -49,11 +49,41 @@ export const FloatingWindow: React.FC<FloatingWindowProps> = ({
 
   const position = win.floatingPosition || { x: fd.x, y: fd.y, width: fd.width, height: fd.height };
 
+  // 从标签栏拖出时，鼠标仍按住 — 自动接续拖动
   useEffect(() => {
-    if (isDragging || isResizing) return;
+    if (!win.pendingDragStart || isDragging || isResizing) return;
+
+    let currentX = position.x;
+    let currentY = position.y;
+    if (windowRef.current) {
+      const rect = windowRef.current.getBoundingClientRect();
+      currentX = rect.left;
+      currentY = rect.top;
+    }
+
+    onFocusWindow?.(win.id);
+    dragToRestoreRef.current = { windowId: win.id, windowTitle: win.title };
+    try {
+      sessionStorage.setItem('draggingWindowId', win.id);
+      sessionStorage.setItem('draggingWindowTitle', win.title);
+    } catch { /* ignore */ }
+
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: win.pendingDragStart.x - currentX,
+      y: win.pendingDragStart.y - currentY,
+      startX: currentX,
+      startY: currentY,
+      startWidth: position.width,
+      startHeight: position.height,
+    };
+  }, [win.pendingDragStart, win.id, win.title, isDragging, isResizing, position, onFocusWindow]);
+
+  useEffect(() => {
+    if (isDragging || isResizing || win.pendingDragStart) return;
     const fixed = fixWindowPosition(position);
     if (fixed.x !== position.x || fixed.y !== position.y) onUpdateFloatingPosition(win.id, fixed);
-  }, [win.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [win.id, win.pendingDragStart]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!windowRef.current || isDragging || isResizing) return;
