@@ -1,0 +1,23 @@
+.rw-antd-sidebar .rw-antd-sider {
+  height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-right: 1px solid var(--rw-color-border);
+}
+
+.rw-antd-sidebar .rw-antd-menu-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+.rw-antd-sidebar .ant-menu {
+  border-inline-end: none !important;
+  background: transparent !important;
+}
+
+.rw-antd-sidebar .rw-workspace-sidebar-footer {
+  position: relative;
+  flex-shrink: 0;
+}

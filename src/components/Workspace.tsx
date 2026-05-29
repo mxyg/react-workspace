@@ -10,7 +10,8 @@ import { WorkspaceProvider } from '../context/WorkspaceContext';
 import WorkspaceSidebar from './WorkspaceSidebar';
 import WindowManager from './WindowManager';
 import { resolveWindowTitle, collectParentMenuKeys } from '../utils/menuUtils';
-import type { WorkspaceProps, WorkspaceRef, WindowConfig, WindowRenderContext } from '../types';
+import { themeToCssVars } from '../utils/theme';
+import type { WorkspaceProps, WorkspaceRef, WindowConfig, WindowRenderContext, WorkspaceSidebarRenderProps } from '../types';
 import '../styles/theme.css';
 import '../styles/workspace.css';
 
@@ -38,6 +39,8 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
     contentBackground,
     enableKeyboardShortcuts = true,
     themeClassName,
+    theme,
+    renderSidebar,
     className,
     style,
   },
@@ -121,25 +124,33 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
   );
 
   const bg = contentBackground ?? 'var(--rw-color-bg-tertiary)';
+  const themeStyle = theme ? themeToCssVars(theme) : undefined;
+  const rootStyle = { minHeight: '100vh', height: '100vh', display: 'flex' as const, ...themeStyle, ...style };
+
+  const sidebarProps: WorkspaceSidebarRenderProps = {
+    menuItems,
+    onMenuClick: handleMenuClick,
+    onAction,
+    activeWindowType,
+    header: sidebarHeader,
+    footer: sidebarFooter,
+    defaultOpenKeys: collectParentMenuKeys(menuItems),
+    siderWidth,
+  };
 
   return (
     <WorkspaceProvider value={contextValue}>
-      <Spinner spinning={loading} tip={loadingTip}>
-        <div
-          className={`rw-workspace ${themeClassName || ''} ${className || ''}`.trim()}
-          style={{ minHeight: '100vh', height: '100vh', display: 'flex', ...style }}
-        >
-          <WorkspaceSidebar
-            menuItems={menuItems}
-            onMenuClick={handleMenuClick}
-            onAction={onAction}
-            activeWindowType={activeWindowType}
-            header={sidebarHeader}
-            footer={sidebarFooter}
-            defaultOpenKeys={collectParentMenuKeys(menuItems)}
-            siderWidth={siderWidth}
-          />
-          <main className="rw-workspace-main" style={{ background: bg }}>
+      <div
+        className={`rw-workspace ${themeClassName || ''} ${className || ''}`.trim()}
+        style={rootStyle}
+      >
+        {renderSidebar ? (
+          renderSidebar(sidebarProps)
+        ) : (
+          <WorkspaceSidebar {...sidebarProps} />
+        )}
+        <main className="rw-workspace-main" style={{ background: bg }}>
+          <Spinner spinning={loading} tip={loadingTip}>
             <WindowManager
               workspaceId={workspaceId}
               windows={windows}
@@ -158,9 +169,9 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
               emptyDescription={emptyDescription}
               floatingDefaults={floatingDefaults}
             />
-          </main>
-        </div>
-      </Spinner>
+          </Spinner>
+        </main>
+      </div>
     </WorkspaceProvider>
   );
 });

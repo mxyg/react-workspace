@@ -10,10 +10,16 @@ export default defineConfig({
   ],
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: {
+        index: resolve(__dirname, 'src/index.ts'),
+        antd: resolve(__dirname, 'src/integrations/antd.ts'),
+      },
       name: 'ReactWorkspace',
       formats: ['es', 'cjs'],
-      fileName: (format) => `react-workspace.${format === 'es' ? 'js' : 'cjs'}`,
+      fileName: (format, entryName) =>
+        entryName === 'index'
+          ? `react-workspace.${format === 'es' ? 'js' : 'cjs'}`
+          : `react-workspace-${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
     },
     rollupOptions: {
       external: [
@@ -21,6 +27,8 @@ export default defineConfig({
         'react-dom',
         'react/jsx-runtime',
         'react-router-dom',
+        'antd',
+        '@ant-design/icons',
       ],
       output: {
         assetFileNames: 'react-workspace.[ext]',

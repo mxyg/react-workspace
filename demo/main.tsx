@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import App from './App';
+import 'antd/dist/reset.css';
 import '../src/styles/theme.css';
 import '../src/styles/workspace.css';
 import '../src/styles/workspace-sidebar.css';

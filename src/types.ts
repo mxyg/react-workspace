@@ -3,6 +3,7 @@
  */
 
 import type { ReactNode, Dispatch, SetStateAction, CSSProperties, Ref } from 'react';
+import type { WorkspaceTheme } from './utils/theme';
 
 /** 窗口位置和大小 */
 export interface WindowPosition {
@@ -137,6 +138,18 @@ export interface WorkspaceRef extends UseWorkspaceReturn {
   workspaceId: string;
 }
 
+/** 自定义侧边栏 renderSidebar 接收的参数 */
+export interface WorkspaceSidebarRenderProps {
+  menuItems: SidebarMenuEntry[];
+  onMenuClick: (windowType: string, props?: Record<string, unknown>) => void;
+  onAction?: (action: string) => void;
+  activeWindowType?: string;
+  header?: ReactNode;
+  footer?: ReactNode;
+  defaultOpenKeys?: string[];
+  siderWidth?: number;
+}
+
 /** Workspace 组件 Props */
 export interface WorkspaceProps {
   workspaceId: string;
@@ -180,6 +193,10 @@ export interface WorkspaceProps {
   enableKeyboardShortcuts?: boolean;
   /** 主题 class，如 rw-theme-dark */
   themeClassName?: string;
+  /** 通过 props 覆盖 CSS 变量主题（可与 antd token 映射配合） */
+  theme?: WorkspaceTheme;
+  /** 完全自定义侧边栏，例如使用 Ant Design Menu */
+  renderSidebar?: (props: WorkspaceSidebarRenderProps) => ReactNode;
   className?: string;
   style?: CSSProperties;
 }

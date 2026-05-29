@@ -102,6 +102,88 @@ function App() {
 | `contentBackground` | `string` | `#f0f2f5` | 内容区背景色 |
 | `enableKeyboardShortcuts` | `boolean` | `true` | Ctrl+W / Ctrl+Tab |
 | `themeClassName` | `string` | - | 如 `rw-theme-dark` 启用暗色主题 |
+| `theme` | `WorkspaceTheme` | - | 通过 props 覆盖 CSS 变量（可与 antd token 映射） |
+| `renderSidebar` | `(props) => ReactNode` | - | 自定义侧边栏，例如 Ant Design Menu |
+
+### 与 Ant Design 集成
+
+库核心**零 antd 依赖**，但可无缝配合 Ant Design 使用：
+
+```bash
+yarn add react-workspace antd @ant-design/icons
+```
+
+#### 1. 主题同步（推荐）
+
+将 antd Design Token 映射为 Workspace CSS 变量，标签栏、边框等会自动与 antd 风格一致：
+
+```tsx
+import { ConfigProvider, theme } from 'antd';
+import { Workspace, mapAntdTokenToWorkspaceTheme } from 'react-workspace';
+import 'react-workspace/style.css';
+
+function ThemedApp() {
+  const { token } = theme.useToken();
+  return (
+    <Workspace
+      theme={mapAntdTokenToWorkspaceTheme(token)}
+      menuItems={menuItems}
+      renderWindow={renderWindow}
+      workspaceId="app"
+    />
+  );
+}
+
+export default function App() {
+  return (
+    <ConfigProvider theme={{ token: { colorPrimary: '#1677ff' } }}>
+      <ThemedApp />
+    </ConfigProvider>
+  );
+}
+```
+
+也可直接得到 inline style：`mapAntdTokenToCssVars(token)`。
+
+#### 2. 使用 Ant Design 侧边栏
+
+```tsx
+import { AntdWorkspaceSidebar } from 'react-workspace/antd';
+
+<Workspace
+  renderSidebar={(props) => (
+    <AntdWorkspaceSidebar {...props} theme="light" siderWidth={240} />
+  )}
+  ...
+/>
+```
+
+`AntdWorkspaceSidebar` 接收与默认侧边栏相同的 props，内部使用 antd `Menu` + `Layout.Sider`。
+
+#### 3. 窗口内容使用 antd 组件
+
+`renderWindow` 渲染的内容完全由你控制，可直接使用 Table、Form、Modal 等任意 antd 组件：
+
+```tsx
+renderWindow={(window) => {
+  if (window.type === 'users') return <UserTable />;
+  return <Empty description="未知页面" />;
+}}
+```
+
+#### 4. 纯 CSS 定制（不用 antd）
+
+```css
+.my-workspace {
+  --rw-color-primary: #6366f1;
+  --rw-sidebar-width: 260px;
+  --rw-tab-height: 36px;
+}
+```
+
+```tsx
+<Workspace className="my-workspace" themeClassName="rw-theme-dark" ... />
+```
 
 ### 快捷键
 
@@ -303,7 +385,20 @@ chmod +x scripts/publish-to-git.sh
 ./scripts/publish-to-git.sh https://github.com/mxyg/react-workspace.git --yes
 ```
 
-### 第四步：完善 GitHub 仓库
+### 第四步：启用 GitHub Pages（必做，否则 Deploy 会 404）
+
+1. 打开 [Settings → Pages](https://github.com/mxyg/react-workspace/settings/pages)
+2. **Build and deployment** → **Source** 选择 **GitHub Actions**（不是 Deploy from a branch）
+3. 保存后，到 [Actions](https://github.com/mxyg/react-workspace/actions) → 选中失败的 **Deploy Demo** → **Re-run all jobs**
+
+若未执行第 2 步，会出现如下错误：
+
+```
+Error: Failed to create deployment (status: 404)
+Ensure GitHub Pages has been enabled
+```
+
+### 第五步：完善 GitHub 仓库
 
 | 项目 | 建议 |
 |------|------|
@@ -316,6 +411,8 @@ chmod +x scripts/publish-to-git.sh
 - **Deploy Demo** — 部署到 GitHub Pages（需在 Settings → Pages → Source 选 GitHub Actions）
 
 Demo 地址：`https://mxyg.github.io/react-workspace/`
+
+> 首次部署需在 Settings → Pages 将 Source 设为 **GitHub Actions**，然后 Re-run 工作流。
 
 ### 后续更新
 
@@ -358,6 +455,13 @@ yarn add @mxyg/react-workspace
 ---
 
 ## 版本历史
+
+### v1.2.0
+- 修复侧边栏 footer 遮挡菜单、loading 遮罩覆盖侧边栏等问题
+- 优化默认 UI（标签高亮、菜单选中态）
+- 新增 `theme` prop 与 antd token 映射工具
+- 新增 `renderSidebar` 与 `react-workspace/antd` 可选集成
+- Demo 改为 Ant Design 示例
 
 ### v1.1.0
 - 移除 antd 依赖，零 UI 框架

@@ -32,6 +32,7 @@ export type {
   UseWorkspaceReturn,
   WorkspaceProps,
   WorkspaceRef,
+  WorkspaceSidebarRenderProps,
 } from './types';
 
 export type { WindowTabsProps } from './components/WindowTabs';
@@ -57,3 +58,11 @@ export {
   collectParentMenuKeys,
   labelToString,
 } from './utils/menuUtils';
+
+export {
+  themeToCssVars,
+  mapAntdTokenToWorkspaceTheme,
+  mapAntdTokenToCssVars,
+} from './utils/theme';
+
+export type { WorkspaceTheme } from './utils/theme';

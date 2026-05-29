@@ -5,7 +5,7 @@
 import React, { useState, useMemo } from 'react';
 import { IconMenuFold, IconMenuUnfold, IconChevronDown } from '../ui/Icons';
 import type { SidebarMenuEntry, SidebarMenuItem } from '../types';
-import { findMenuKeyByWindowType } from '../utils/menuUtils';
+import { findMenuKeyByWindowType, labelToString } from '../utils/menuUtils';
 import '../styles/workspace-sidebar.css';
 
 export interface WorkspaceSidebarProps {
@@ -47,7 +47,8 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     setCollapsed((v) => { onCollapsedChange?.(!v); return !v; });
   };
 
-  const toggleOpen = (key: string) => {
+  const toggleOpen = (key: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setOpenKeys((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
@@ -56,16 +57,17 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     });
   };
 
-  const handleClick = (item: SidebarMenuItem) => {
+  const activateItem = (item: SidebarMenuItem) => {
     if (item.disabled) return;
-    if (item.children?.length) {
-      toggleOpen(item.key);
+    if (item.windowType) {
+      onMenuClick(item.windowType, item.props);
       return;
     }
-    setTimeout(() => {
-      if (item.windowType) onMenuClick(item.windowType, item.props);
-      else if (item.action && onAction) onAction(item.action);
-    }, 0);
+    if (item.action && onAction) {
+      onAction(item.action);
+      return;
+    }
+    if (item.children?.length) toggleOpen(item.key);
   };
 
   const renderItems = (items: SidebarMenuEntry[], depth = 0) =>
@@ -83,14 +85,21 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
           <button
             type="button"
             className={`rw-menu-item ${isSelected ? 'selected' : ''} ${item.disabled ? 'disabled' : ''}`}
-            style={{ paddingLeft: 12 + depth * 16 }}
-            onClick={() => handleClick(item)}
+            style={{ paddingLeft: collapsed ? 12 : 12 + depth * 16 }}
+            onClick={() => activateItem(item)}
             disabled={item.disabled}
+            title={collapsed ? labelToString(item.label) : undefined}
           >
             {item.icon && <span className="rw-menu-icon">{item.icon}</span>}
             {!collapsed && <span className="rw-menu-label">{item.label}</span>}
             {!collapsed && hasChildren && (
-              <span className={`rw-menu-arrow ${isOpen ? 'open' : ''}`}><IconChevronDown size={10} /></span>
+              <span
+                className={`rw-menu-arrow ${isOpen ? 'open' : ''}`}
+                onClick={(e) => toggleOpen(item.key, e)}
+                role="presentation"
+              >
+                <IconChevronDown size={10} />
+              </span>
             )}
           </button>
           {!collapsed && hasChildren && isOpen && (

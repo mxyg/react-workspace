@@ -7,8 +7,9 @@
 #
 # 步骤:
 #   1. 本地 build 验证
-#   2. 复制源码到临时目录（不含 node_modules）
-#   3. 初始化 git 并 push 到 GitHub
+#   2. 克隆远程仓库（或初始化新仓库）
+#   3. 同步源码并提交
+#   4. push 到 GitHub
 
 set -euo pipefail
 
@@ -30,50 +31,74 @@ cd "$PACKAGE_DIR"
 yarn build
 yarn type-check
 
-echo ">>> [2/4] 复制文件到临时目录..."
+VERSION=$(node -p "require('./package.json').version")
+
+echo ">>> [2/4] 准备临时目录..."
 TEMP_DIR=$(mktemp -d)
+
+REMOTE_EXISTS=false
+if git ls-remote "$REMOTE_URL" HEAD >/dev/null 2>&1; then
+  REMOTE_HEAD=$(git ls-remote "$REMOTE_URL" HEAD | awk '{print $1}')
+  if [ -n "$REMOTE_HEAD" ]; then
+    REMOTE_EXISTS=true
+  fi
+fi
+
+if [ "$REMOTE_EXISTS" = true ]; then
+  echo "    远程仓库已有历史，克隆后增量更新..."
+  git clone --depth 1 "$REMOTE_URL" "$TEMP_DIR"
+else
+  echo "    远程仓库为空，初始化新仓库..."
+  mkdir -p "$TEMP_DIR"
+  cd "$TEMP_DIR"
+  git init
+  git branch -M main
+  git remote add origin "$REMOTE_URL"
+fi
+
+echo ">>> [3/4] 同步文件..."
 rsync -a \
   --exclude node_modules \
   --exclude .git \
+  --exclude dist-demo \
   "$PACKAGE_DIR/" "$TEMP_DIR/"
 
 cd "$TEMP_DIR"
-
-echo ">>> [3/4] 初始化 Git 仓库..."
-cd "$TEMP_DIR"
-yarn install
-git init
-git branch -M main
 
 cat > .gitattributes << 'EOF'
 *.sh text eol=lf
 EOF
 
 git add -A
-git commit -m "$(cat <<'EOF'
-Initial release: react-workspace v1.0.0
 
-IDE-style multi-window workspace component for React.
-Features: tabs, floating windows, sidebar, URL sync, localStorage persistence.
+if git diff --staged --quiet; then
+  echo "    无文件变更，跳过提交"
+else
+  git commit -m "$(cat <<EOF
+release: react-workspace v${VERSION}
+
+IDE-style multi-window workspace for React.
 EOF
 )"
-
-git remote add origin "$REMOTE_URL"
+fi
 
 echo ""
 echo ">>> [4/4] 推送到 GitHub"
 echo "    远程: $REMOTE_URL"
+echo "    版本: v${VERSION}"
 echo ""
 
+PUSH_CMD="git push -u origin main"
+
 if [ "$AUTO_YES" = "--yes" ]; then
-  git push -u origin main
+  $PUSH_CMD
 else
   read -p "确认推送? (y/N) " confirm
   if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
     echo "已取消。临时目录: $TEMP_DIR"
     exit 0
   fi
-  git push -u origin main
+  $PUSH_CMD
 fi
 
 echo ""
@@ -81,8 +106,5 @@ echo "✅ 发布成功!"
 echo ""
 echo "下一步:"
 echo "  1. 打开 ${REMOTE_URL%.git} 确认代码已上传"
-echo "  2. 在 GitHub 仓库 Settings → General 填写 Description 和 Topics"
-echo "     建议 Topics: react, workspace, multi-window, tabs, ide, antd"
-echo "  3. （可选）发布到 npm:"
-echo "     cd packages/react-workspace && npm publish --access public"
-echo "  4. 更新 package.json 中的 repository / homepage / bugs 为你的 GitHub 地址"
+echo "  2. GitHub Actions 会自动 CI + 部署 Demo"
+echo "  3. Demo: https://$(echo "$REMOTE_URL" | sed -E 's#.*github.com[:/]([^/]+)/([^/.]+).*#\1.github.io/\2/#')"
