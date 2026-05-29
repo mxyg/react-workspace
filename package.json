@@ -1,0 +1,71 @@
+{
+  "name": "react-workspace",
+  "version": "1.1.0",
+  "description": "Zero-dependency React IDE-like multi-window workspace with tabs, floating windows, keyboard shortcuts, and theming",
+  "type": "module",
+  "main": "./dist/react-workspace.cjs",
+  "module": "./dist/react-workspace.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/react-workspace.js",
+      "require": "./dist/react-workspace.cjs"
+    },
+    "./style.css": "./dist/react-workspace.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "build:demo": "vite build --config demo/vite.config.ts",
+    "dev:demo": "vite --config demo/vite.config.ts",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "yarn build"
+  },
+  "keywords": [
+    "react",
+    "workspace",
+    "multi-window",
+    "tabs",
+    "floating-window",
+    "ide",
+    "keyboard-shortcuts",
+    "zero-dependencies"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mxyg/react-workspace.git"
+  },
+  "homepage": "https://mxyg.github.io/react-workspace/",
+  "bugs": {
+    "url": "https://github.com/mxyg/react-workspace/issues"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react-router-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.24",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^5.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.8.2",
+    "typescript": "~5.8.3",
+    "vite": "^7.2.2",
+    "vite-plugin-dts": "^4.5.0"
+  }
+}

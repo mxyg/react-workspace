@@ -1,0 +1,23 @@
+.rw-window-manager { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.rw-window-manager-empty { display: flex; justify-content: center; align-items: center; height: 100%; background: var(--rw-color-bg); }
+.rw-window-content-area { flex: 1; overflow: auto; position: relative; background: var(--rw-color-bg); min-height: 0; }
+
+.rw-minimized-windows-bar {
+  display: flex; gap: 8px; padding: 8px;
+  background: var(--rw-color-bg-secondary);
+  border-top: 1px solid var(--rw-color-border);
+  overflow-x: auto; max-height: 60px; flex-shrink: 0;
+}
+
+.rw-minimized-window-item {
+  padding: 8px 16px; background: var(--rw-color-bg);
+  border: 1px solid var(--rw-color-border-strong); border-radius: var(--rw-radius);
+  cursor: pointer; white-space: nowrap; flex-shrink: 0; max-width: 200px;
+  overflow: hidden; text-overflow: ellipsis; color: var(--rw-color-text);
+  transition: all var(--rw-transition);
+}
+
+.rw-minimized-window-item:hover {
+  background: var(--rw-color-bg-active);
+  border-color: var(--rw-color-primary);
+}

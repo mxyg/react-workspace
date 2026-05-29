@@ -1,0 +1,8 @@
+.rw-window-container { height: 100%; overflow: auto; display: flex; flex-direction: column; position: relative; }
+.rw-window-container.active { display: flex; }
+.rw-window-container > div { width: 100%; flex: 1; overflow: auto; min-height: 0; }
+
+.rw-window-content-padding {
+  padding: 16px; width: 100%; flex: 1; overflow: auto;
+  display: flex; flex-direction: column; box-sizing: border-box; min-height: 0;
+}

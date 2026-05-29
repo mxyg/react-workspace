@@ -1,0 +1,168 @@
+/**
+ * Workspace 主组件
+ */
+
+import React, { useCallback, useMemo, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { Spinner } from '../ui/Spinner';
+import { useWorkspace } from '../hooks/useWorkspace';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { WorkspaceProvider } from '../context/WorkspaceContext';
+import WorkspaceSidebar from './WorkspaceSidebar';
+import WindowManager from './WindowManager';
+import { resolveWindowTitle, collectParentMenuKeys } from '../utils/menuUtils';
+import type { WorkspaceProps, WorkspaceRef, WindowConfig, WindowRenderContext } from '../types';
+import '../styles/theme.css';
+import '../styles/workspace.css';
+
+export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Workspace(
+  {
+    workspaceId,
+    menuItems,
+    renderWindow,
+    sidebarHeader,
+    sidebarFooter,
+    defaultWindow,
+    loading = false,
+    loadingTip = '加载中...',
+    onAction,
+    activeWindowType: externalActiveWindowType,
+    emptyDescription,
+    syncToUrl = false,
+    preserveUrlParams = true,
+    searchParams,
+    setSearchParams,
+    floatingDefaults,
+    onWindowsChange,
+    onReady,
+    siderWidth = 240,
+    contentBackground,
+    enableKeyboardShortcuts = true,
+    themeClassName,
+    className,
+    style,
+  },
+  ref,
+) {
+  const workspace = useWorkspace({
+    workspaceId,
+    defaultWindow,
+    syncToUrl,
+    preserveUrlParams,
+    searchParams,
+    setSearchParams,
+    floatingDefaults,
+    onWindowsChange,
+  });
+
+  const {
+    windows,
+    activeWindowId,
+    openWindow,
+    switchWindow,
+    closeWindow,
+    toggleMinimize,
+    floatWindow,
+    restoreWindow,
+    updateFloatingPosition,
+    focusWindow,
+    batchManage,
+    updateWindowProps,
+    clearPendingAction,
+    reorderWindows,
+  } = workspace;
+
+  useKeyboardShortcuts({
+    enabled: enableKeyboardShortcuts,
+    windows,
+    activeWindowId,
+    onSwitchWindow: switchWindow,
+    onCloseWindow: closeWindow,
+  });
+
+  const workspaceApi: WorkspaceRef = { workspaceId, ...workspace };
+  useImperativeHandle(ref, () => workspaceApi, [workspaceId, windows, activeWindowId]);
+
+  useEffect(() => {
+    if (onReady && windows.length > 0) onReady({ workspaceId, ...workspace });
+  }, [onReady, workspaceId, windows.length]);
+
+  const activeWindowType = useMemo(() => {
+    if (externalActiveWindowType !== undefined) return externalActiveWindowType;
+    return windows.find((w) => w.id === activeWindowId)?.type;
+  }, [externalActiveWindowType, windows, activeWindowId]);
+
+  const handleMenuClick = useCallback(
+    (windowType: string, props?: Record<string, unknown>) => {
+      openWindow({ type: windowType, title: resolveWindowTitle(menuItems, windowType), minimized: false }, props);
+    },
+    [openWindow, menuItems],
+  );
+
+  const buildRenderContext = useCallback(
+    (window: WindowConfig, active: boolean): WindowRenderContext => ({
+      workspaceId,
+      active,
+      activeWindowId,
+      windows,
+      openWindow,
+      switchWindow,
+      closeWindow,
+      toggleMinimize,
+      floatWindow,
+      updateWindowProps: (id, props) => updateWindowProps(id, props),
+      clearPendingAction,
+    }),
+    [workspaceId, activeWindowId, windows, openWindow, switchWindow, closeWindow, toggleMinimize, floatWindow, updateWindowProps, clearPendingAction],
+  );
+
+  const contextValue = useMemo(
+    () => ({ ...workspaceApi, buildRenderContext }),
+    [workspaceId, windows, activeWindowId, buildRenderContext],
+  );
+
+  const bg = contentBackground ?? 'var(--rw-color-bg-tertiary)';
+
+  return (
+    <WorkspaceProvider value={contextValue}>
+      <Spinner spinning={loading} tip={loadingTip}>
+        <div
+          className={`rw-workspace ${themeClassName || ''} ${className || ''}`.trim()}
+          style={{ minHeight: '100vh', height: '100vh', display: 'flex', ...style }}
+        >
+          <WorkspaceSidebar
+            menuItems={menuItems}
+            onMenuClick={handleMenuClick}
+            onAction={onAction}
+            activeWindowType={activeWindowType}
+            header={sidebarHeader}
+            footer={sidebarFooter}
+            defaultOpenKeys={collectParentMenuKeys(menuItems)}
+            siderWidth={siderWidth}
+          />
+          <main className="rw-workspace-main" style={{ background: bg }}>
+            <WindowManager
+              workspaceId={workspaceId}
+              windows={windows}
+              activeWindowId={activeWindowId}
+              renderWindow={(win) => renderWindow(win, buildRenderContext(win, win.id === activeWindowId && !win.floating))}
+              onSwitchWindow={switchWindow}
+              onCloseWindow={closeWindow}
+              onToggleMinimize={toggleMinimize}
+              onBatchManage={batchManage}
+              onOpenWindow={openWindow}
+              onFloatWindow={floatWindow}
+              onRestoreWindow={restoreWindow}
+              onUpdateFloatingPosition={updateFloatingPosition}
+              onFocusWindow={focusWindow}
+              onReorderWindows={reorderWindows}
+              emptyDescription={emptyDescription}
+              floatingDefaults={floatingDefaults}
+            />
+          </main>
+        </div>
+      </Spinner>
+    </WorkspaceProvider>
+  );
+});
+
+export default Workspace;
