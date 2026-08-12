@@ -18,7 +18,7 @@
 
 .rw-workspace-sidebar-header {
   flex-shrink: 0;
-  padding: 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--rw-color-border);
   background: var(--rw-sidebar-header-bg);
   z-index: 10;
@@ -32,13 +32,14 @@
   overflow-x: hidden;
   min-height: 0;
   padding: 8px 0;
+  scrollbar-width: thin;
 }
 
 .rw-workspace-sidebar-footer {
   flex-shrink: 0;
-  padding: 8px;
+  padding: 10px 12px;
   border-top: 1px solid var(--rw-color-border);
-  background: var(--rw-color-bg-secondary);
+  background: transparent;
 }
 
 .rw-menu-divider {
@@ -48,10 +49,11 @@
 }
 
 .rw-menu-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 12px;
+  padding: 8px 10px;
   border: none;
   background: transparent;
   color: var(--rw-color-text);
@@ -59,17 +61,29 @@
   text-align: left;
   cursor: pointer;
   border-radius: var(--rw-radius);
-  margin: 1px 6px;
-  width: calc(100% - 12px);
+  margin: 2px 8px;
+  width: calc(100% - 16px);
   transition: background var(--rw-transition), color var(--rw-transition);
 }
 
-.rw-menu-item:hover:not(.disabled) { background: var(--rw-color-bg-hover); }
+.rw-menu-item:hover:not(.disabled) { background: var(--rw-color-bg-hover); color: var(--rw-color-text); }
+.rw-menu-item:focus-visible { outline: 2px solid var(--rw-color-primary); outline-offset: -2px; }
 .rw-menu-item.selected {
   background: var(--rw-color-bg-active);
   color: var(--rw-color-primary);
   font-weight: 500;
-  box-shadow: inset 3px 0 0 var(--rw-color-primary);
+}
+/* 选中态不再压一条 3px 的内投影竖条：菜单项本身已经是圆角色块，
+   竖条会被圆角切出一个尖角，而且和左侧边界贴太近。改成一个小圆点，
+   收窄的折叠态下它也还认得出来。 */
+.rw-menu-item.selected::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--rw-color-primary);
 }
 .rw-menu-item.disabled { color: var(--rw-color-text-muted); cursor: not-allowed; }
 
@@ -88,10 +102,10 @@
   align-items: center;
   justify-content: center;
   background: var(--rw-color-bg);
-  border: 1px solid var(--rw-color-border-strong);
+  border: 1px solid var(--rw-color-border);
   border-radius: 6px;
   cursor: pointer;
-  box-shadow: 0 2px 4px var(--rw-color-shadow-light);
+  box-shadow: var(--rw-shadow-md);
   z-index: 100;
   margin-left: -12px;
   color: var(--rw-color-text-secondary);
@@ -100,7 +114,7 @@
 
 .rw-workspace-collapse-button:hover {
   background: var(--rw-color-bg-hover);
-  transform: scale(1.05);
+  transform: scale(1.08);
   color: var(--rw-color-text);
 }
 

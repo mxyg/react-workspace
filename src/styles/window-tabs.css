@@ -1,12 +1,17 @@
+/* 标签栏。
+   放弃了老式的「文件夹」造型（上凸圆角 + 三面描边）—— 那套在深色主题下
+   边框会糊成一团，而且标签一多就像一排纸片。改成扁平色块：未选中融进底色，
+   选中的浮起来成一张卡片，靠底色差和一道细阴影区分，不靠描边。 */
+
 .rw-window-tabs {
-  background: var(--rw-color-bg);
+  background: var(--rw-color-bg-secondary);
   border-bottom: 1px solid var(--rw-color-border);
   flex-shrink: 0;
 }
 
 .rw-window-tabs-container {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   min-height: var(--rw-tab-height);
   position: relative;
 }
@@ -16,36 +21,49 @@
   flex: 1;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0 8px;
+  padding: 4px 6px;
   gap: 2px;
-  align-items: flex-end;
-  scrollbar-width: thin;
+  align-items: center;
+  scrollbar-width: none;
 }
+.rw-tab-list::-webkit-scrollbar { display: none; }
 
 .rw-tab-item {
   display: flex;
   align-items: center;
+  gap: 6px;
   position: relative;
-  padding: 8px 28px 8px 12px;
+  /* 右侧留出关闭按钮的位置：常驻留白，鼠标移上去才显形，
+     标签宽度不会因此跳一下。 */
+  padding: 6px 26px 6px 10px;
   background: var(--rw-tab-bg);
-  border: 1px solid var(--rw-color-border);
-  border-bottom: none;
+  border: 1px solid transparent;
   border-radius: var(--rw-tab-radius);
   cursor: pointer;
   flex: 0 0 auto;
-  width: auto;
   max-width: 200px;
   user-select: none;
-  transition: background var(--rw-transition);
+  color: var(--rw-color-text-secondary);
+  transition: background var(--rw-transition), color var(--rw-transition),
+              box-shadow var(--rw-transition);
 }
 
-.rw-tab-item:hover { background: var(--rw-color-bg-hover); }
+.rw-tab-item:hover {
+  background: var(--rw-color-bg-hover);
+  color: var(--rw-color-text);
+}
+
 .rw-tab-item.active {
   background: var(--rw-tab-bg-active);
-  border-bottom-color: transparent;
-  box-shadow: inset 0 -2px 0 var(--rw-color-primary);
-  z-index: 1;
-  position: relative;
+  border-color: var(--rw-color-border);
+  color: var(--rw-color-text);
+  font-weight: 500;
+  box-shadow: var(--rw-shadow-sm);
+}
+
+.rw-tab-item:focus-visible {
+  outline: 2px solid var(--rw-color-primary);
+  outline-offset: -1px;
 }
 
 .rw-tab-title {
@@ -53,7 +71,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--rw-font-size);
-  color: var(--rw-color-text);
   flex: 0 1 auto;
   min-width: 0;
 }
@@ -65,31 +82,43 @@
   transform: translateY(-50%);
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--rw-transition);
+  border-radius: 4px;
+  transition: opacity var(--rw-transition), background var(--rw-transition);
 }
+.rw-window-tab-close-btn:hover { background: var(--rw-color-bg-hover); }
 
 .rw-tab-item.active .rw-window-tab-close-btn,
 .rw-tab-item:hover .rw-window-tab-close-btn {
-  opacity: 1;
+  opacity: 0.55;
   pointer-events: auto;
 }
+.rw-tab-item .rw-window-tab-close-btn:hover { opacity: 1; }
 
-.rw-window-tabs-batch-btn { margin: 4px 8px 4px 0; flex-shrink: 0; align-self: center; }
+.rw-window-tabs-batch-btn {
+  margin: 0 6px;
+  flex-shrink: 0;
+  align-self: center;
+  border-radius: var(--rw-radius);
+}
 
+/* 拖动排序时的插入位置指示线。不做闪烁动画 ——
+   拖动本身已经在动，再闪一下只会更难对准。 */
 .rw-window-tab-insert-indicator {
   position: absolute;
-  top: 4px;
-  bottom: 4px;
-  width: 3px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
   background: var(--rw-color-primary);
   z-index: 10;
   pointer-events: none;
   border-radius: 2px;
-  animation: rw-pulse 1s ease-in-out infinite;
 }
 
+/* 从浮动窗口拖回标签栏时的占位块，位置就是松手后的落点。 */
 .rw-tab-preview {
-  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
   background: var(--rw-color-primary-bg);
   border: 1px dashed var(--rw-color-primary-border);
   border-radius: var(--rw-tab-radius);
@@ -99,9 +128,14 @@
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 0 0 auto;
 }
 
-@keyframes rw-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+/* 标签栏被 portal 到宿主顶栏里时：去掉自己的底色和下边框，
+   融进顶栏那一行，不再是「一条杠里套一条杠」。 */
+.rw-window-tabs.rw-tabs-embedded {
+  background: transparent;
+  border-bottom: none;
+  min-width: 0;
+  flex: 1;
 }

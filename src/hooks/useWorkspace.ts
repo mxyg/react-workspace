@@ -31,6 +31,36 @@ function mergeFloatingDefaults(custom?: FloatingWindowDefaults): Required<Floati
   return { ...DEFAULT_FLOATING, ...custom };
 }
 
+/**
+ * 解析 URL 里的窗口列表。新老两种格式都认：
+ *   新：[{"t":"devices","n":"设备","p":{...}}]
+ *   老：[{"id":"window-…","type":"devices","title":"设备"}]
+ * 老格式的链接可能已经被人存成书签或者发出去了，不该在升级之后变成一片空白。
+ */
+function parseWindowsParam(raw: string): WindowConfig[] {
+  // 老版本写进去的是 encodeURIComponent 过一次的 JSON，取出来还带着 %7B。
+  let text = raw;
+  if (text.trim().startsWith('%')) {
+    try { text = decodeURIComponent(text); } catch { /* 解不开就按原样试 */ }
+  }
+  const list = JSON.parse(text) as Array<Record<string, unknown>>;
+  if (!Array.isArray(list)) throw new Error('窗口列表不是数组');
+
+  return list.map((raw0) => {
+    const type = String(raw0.t ?? raw0.type ?? '');
+    if (!type) throw new Error('窗口缺少类型');
+    const w: WindowConfig = {
+      id: typeof raw0.id === 'string' && raw0.id ? raw0.id : createWindowId(),
+      type,
+      title: String(raw0.n ?? raw0.title ?? type),
+      minimized: false,
+    };
+    const props = (raw0.p ?? raw0.props) as Record<string, unknown> | undefined;
+    if (props && typeof props === 'object') w.props = props;
+    return w;
+  });
+}
+
 function createWindowId(): string {
   return `window-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -61,7 +91,14 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
 
   const [windows, setWindows] = useState<WindowConfig[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
-  const [initialized, setInitialized] = useState<Record<string, boolean>>({});
+  // 「这个工作区已经初始化过了」的哨兵。
+  //
+  // 必须是 ref 而不是 state：初始化 effect 依赖 searchParams，而开窗口会把窗口
+  // 列表写回 URL，searchParams 随即换成新对象、effect 重跑。哨兵若存在 state 里，
+  // 这次重跑可能赶在 setState 提交之前读到旧值，于是又执行一遍「打开默认窗口」，
+  // 把用户刚点开的窗口顶掉 —— 表现就是点导航切不过去、自动弹回上一个窗口。
+  // ref 的写入是同步的，同一轮里就能挡住第二次执行。
+  const initializedRef = useRef<Record<string, boolean>>({});
 
   const notifyChange = useCallback((newWindows: WindowConfig[], newActiveId: string | null) => {
     onWindowsChangeRef.current?.(newWindows, newActiveId);
@@ -77,6 +114,25 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
     [getWindowState],
   );
 
+  /**
+   * 把窗口列表写进 URL。
+   *
+   * 格式刻意做得短而且能读懂 —— URL 就是这个工作区的状态，它会被复制、
+   * 粘进聊天窗口、存成书签，太长或者满屏 %25 会让人不敢用：
+   *
+   *   ?windows=[{"t":"devices","n":"设备"},{"t":"member","n":"会员 #12","p":{"id":12}}]&active=1
+   *
+   *   t 窗口类型，n 标题，p 窗口参数（详情页的 id 之类，没有就不写）
+   *   active 是**下标**，不是 id
+   *
+   * 三处和老格式不同，都是有理由的：
+   *  · 不写 id。id 带时间戳，本质是本次会话的内部标识，写进 URL 只会让地址
+   *    变长，还给人一种「这个链接绑定了某次会话」的错觉。恢复时重新生成即可。
+   *  · 带上 p。老格式只存 id/type/title，详情类窗口恢复出来会丢掉参数
+   *    （会员详情不知道自己该显示哪个会员）。
+   *  · 不再 encodeURIComponent 一次再交给 URLSearchParams —— 那会把 %5B
+   *    再编码成 %255B，地址长一倍且没人读得懂。URLSearchParams 自己会编码。
+   */
   const saveWindowsToUrl = useCallback(
     (newWindows: WindowConfig[], newActiveId: string | null) => {
       if (!syncToUrl || !setSearchParams) return;
@@ -85,16 +141,16 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
         : new URLSearchParams();
 
       if (newWindows.length > 0) {
-        params.set('windows', encodeURIComponent(JSON.stringify(
-          newWindows.map((w) => ({ id: w.id, type: w.type, title: w.title })),
-        )));
+        params.set('windows', JSON.stringify(newWindows.map((w) => {
+          const item: { t: string; n: string; p?: Record<string, unknown> } = { t: w.type, n: w.title };
+          if (w.props && Object.keys(w.props).length > 0) item.p = w.props;
+          return item;
+        })));
+        const idx = newWindows.findIndex((w) => w.id === newActiveId);
+        if (idx >= 0) params.set('active', String(idx));
+        else params.delete('active');
       } else {
         params.delete('windows');
-      }
-
-      if (newActiveId) {
-        params.set('active', newActiveId);
-      } else {
         params.delete('active');
       }
 
@@ -151,29 +207,30 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
         localStorage.removeItem(`${storageKeyPrefix}${workspaceId}`);
       } catch { /* ignore */ }
     }
-    setInitialized((prev) => {
-      const next = { ...prev };
-      delete next[workspaceId];
-      return next;
-    });
+    delete initializedRef.current[workspaceId];
     openDefaultWindow();
   }, [workspaceId, storageKeyPrefix, openDefaultWindow]);
 
   // workspaceId 变化时重新初始化
   useEffect(() => {
     if (!workspaceId) return;
-    if (initialized[workspaceId]) return;
+    if (initializedRef.current[workspaceId]) return;
+    // 先立哨兵再干活：下面的 setState 会触发重渲染，effect 若重跑必须立刻被挡住。
+    initializedRef.current[workspaceId] = true;
 
     const windowsParam = syncToUrl ? searchParams?.get('windows') : null;
     const activeParam = syncToUrl ? searchParams?.get('active') : null;
 
     if (windowsParam) {
       try {
-        const parsed = JSON.parse(decodeURIComponent(windowsParam)) as WindowConfig[];
+        const parsed = parseWindowsParam(windowsParam);
+        if (parsed.length === 0) throw new Error('窗口列表是空的');
         const withState = parsed.map(restoreWindowState);
-        const activeId = activeParam && withState.some((w) => w.id === activeParam)
-          ? activeParam
-          : withState[0]?.id ?? null;
+        // active 是下标；老格式里它是窗口 id，两种都认。
+        const byIndex = Number(activeParam);
+        const activeId = Number.isInteger(byIndex) && byIndex >= 0 && byIndex < withState.length
+          ? withState[byIndex].id
+          : withState.find((w) => w.id === activeParam)?.id ?? withState[0]?.id ?? null;
         setWindows(withState);
         setActiveWindowId(activeId);
         notifyChange(withState, activeId);
@@ -185,8 +242,7 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
       openDefaultWindow();
     }
 
-    setInitialized((prev) => ({ ...prev, [workspaceId]: true }));
-  }, [workspaceId, searchParams, syncToUrl, initialized, restoreWindowState, openDefaultWindow, notifyChange]);
+  }, [workspaceId, searchParams, syncToUrl, restoreWindowState, openDefaultWindow, notifyChange]);
 
   const openWindow = useCallback(
     (config: Omit<WindowConfig, 'id'>, props?: Record<string, unknown>) => {
@@ -292,9 +348,14 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
       );
 
       if (mousePosition) {
+        // 从标签页拖出来时，窗口左上角就落在鼠标位置。
+        //
+        // 原来是「水平居中于光标、再往上抬 40px」，于是窗口会在脱离标签栏的瞬间
+        // 往左上跳一截，接着拖动又按「光标相对窗口的偏移」接管，视觉上是抖一下。
+        // 左上角对齐光标之后那个偏移正好是 (0,0)，拖出和拖动是连贯的一个动作。
         initialPosition = fixWindowPosition({
-          x: mousePosition.x - fd.width / 2,
-          y: Math.max(0, mousePosition.y - 40),
+          x: mousePosition.x,
+          y: mousePosition.y,
           width: fd.width,
           height: fd.height,
         }, fitOptions);

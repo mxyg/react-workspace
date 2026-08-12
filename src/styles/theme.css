@@ -1,38 +1,50 @@
 /**
  * react-workspace 主题变量
- * 可通过覆盖 CSS 变量自定义外观
+ *
+ * 使用者覆盖这些变量即可换肤（antd 集成会把 antd token 自动映射过来）。
+ * 命名保持稳定 —— 它们是对外 API 的一部分，改名等于破坏使用者的自定义样式。
  */
 .rw-workspace,
-.rw-floating-window {
-  --rw-color-primary: #1890ff;
-  --rw-color-primary-hover: #40a9ff;
-  --rw-color-primary-bg: #e6f7ff;
-  --rw-color-primary-border: #1890ff;
+.rw-floating-window,
+/* 标签栏可以被 portal 到工作区外面（宿主顶栏），那儿的元素拿不到
+   .rw-workspace 上的变量 —— 背景色会变成透明、字号会继承宿主的。
+   所以标签栏自己也带一份。 */
+.rw-window-tabs {
+  --rw-color-primary: #2563eb;
+  --rw-color-primary-hover: #3b82f6;
+  --rw-color-primary-bg: #eff6ff;
+  --rw-color-primary-border: #93c5fd;
 
+  /* 三层背景：内容面 > 外壳 > 底板。层次靠明度差拉开，不靠边框堆。 */
   --rw-color-bg: #ffffff;
-  --rw-color-bg-secondary: #fafafa;
-  --rw-color-bg-tertiary: #f0f2f5;
-  --rw-color-bg-hover: #f5f5f5;
-  --rw-color-bg-active: #f0f5ff;
+  --rw-color-bg-secondary: #f8fafc;
+  --rw-color-bg-tertiary: #f1f5f9;
+  --rw-color-bg-hover: rgba(15, 23, 42, 0.045);
+  --rw-color-bg-active: #eff6ff;
 
-  --rw-color-border: #f0f0f0;
-  --rw-color-border-strong: #d9d9d9;
+  --rw-color-border: #e8ecf1;
+  --rw-color-border-strong: #cbd5e1;
 
-  --rw-color-text: #262626;
-  --rw-color-text-secondary: #595959;
-  --rw-color-text-muted: #8c8c8c;
+  --rw-color-text: #0f172a;
+  --rw-color-text-secondary: #475569;
+  --rw-color-text-muted: #94a3b8;
 
-  --rw-color-shadow: rgba(0, 0, 0, 0.15);
-  --rw-color-shadow-light: rgba(0, 0, 0, 0.08);
+  --rw-color-shadow: rgba(15, 23, 42, 0.16);
+  --rw-color-shadow-light: rgba(15, 23, 42, 0.06);
+
+  /* 分层阴影：一道紧贴的轮廓 + 一道扩散的投影，比单道 box-shadow 立体得多。 */
+  --rw-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 1px rgba(15, 23, 42, 0.04);
+  --rw-shadow-md: 0 2px 8px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.06);
+  --rw-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(15, 23, 42, 0.08);
 
   --rw-sidebar-width: 240px;
   --rw-sidebar-collapsed-width: 64px;
-  --rw-sidebar-header-bg: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+  --rw-sidebar-header-bg: var(--rw-color-bg);
 
   --rw-tab-height: 40px;
-  --rw-tab-bg: var(--rw-color-bg-secondary);
+  --rw-tab-bg: transparent;
   --rw-tab-bg-active: var(--rw-color-bg);
-  --rw-tab-radius: 4px 4px 0 0;
+  --rw-tab-radius: 8px;
 
   --rw-floating-min-width: 400px;
   --rw-floating-min-height: 300px;
@@ -40,25 +52,40 @@
 
   --rw-font-size: 14px;
   --rw-font-size-sm: 12px;
-  --rw-radius: 4px;
-  --rw-radius-lg: 8px;
+  --rw-radius: 6px;
+  --rw-radius-lg: 10px;
 
-  --rw-transition: 0.2s ease;
+  /* 稍微带一点缓出的曲线，比 linear/ease 更贴近「有重量的东西停下来」。 */
+  --rw-transition: 0.16s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/** 暗色主题示例（使用者可自行启用） */
-.rw-workspace.rw-theme-dark {
-  --rw-color-primary: #177ddc;
-  --rw-color-primary-bg: #111d2c;
-  --rw-color-bg: #141414;
-  --rw-color-bg-secondary: #1f1f1f;
-  --rw-color-bg-tertiary: #000000;
-  --rw-color-bg-hover: #262626;
-  --rw-color-bg-active: #111d2c;
-  --rw-color-border: #303030;
-  --rw-color-border-strong: #434343;
-  --rw-color-text: rgba(255, 255, 255, 0.85);
-  --rw-color-text-secondary: rgba(255, 255, 255, 0.65);
-  --rw-color-text-muted: rgba(255, 255, 255, 0.45);
-  --rw-sidebar-header-bg: var(--rw-color-bg-secondary);
+/** 暗色主题 */
+.rw-workspace.rw-theme-dark,
+.rw-floating-window.rw-theme-dark,
+.rw-window-tabs.rw-theme-dark {
+  --rw-color-primary: #60a5fa;
+  --rw-color-primary-hover: #93c5fd;
+  --rw-color-primary-bg: rgba(96, 165, 250, 0.16);
+  --rw-color-primary-border: rgba(96, 165, 250, 0.5);
+
+  --rw-color-bg: #1a1d23;
+  --rw-color-bg-secondary: #15181d;
+  --rw-color-bg-tertiary: #0f1115;
+  --rw-color-bg-hover: rgba(255, 255, 255, 0.06);
+  --rw-color-bg-active: rgba(96, 165, 250, 0.14);
+
+  --rw-color-border: #2a2f37;
+  --rw-color-border-strong: #3d444e;
+
+  --rw-color-text: rgba(255, 255, 255, 0.92);
+  --rw-color-text-secondary: rgba(255, 255, 255, 0.66);
+  --rw-color-text-muted: rgba(255, 255, 255, 0.42);
+
+  --rw-color-shadow: rgba(0, 0, 0, 0.5);
+  --rw-color-shadow-light: rgba(0, 0, 0, 0.3);
+  --rw-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --rw-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.36);
+  --rw-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  --rw-sidebar-header-bg: var(--rw-color-bg);
 }

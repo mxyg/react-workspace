@@ -10,8 +10,9 @@
 }
 
 .rw-minimized-window-item {
-  padding: 8px 16px; background: var(--rw-color-bg);
-  border: 1px solid var(--rw-color-border-strong); border-radius: var(--rw-radius);
+  padding: 6px 14px; background: var(--rw-color-bg);
+  border: 1px solid var(--rw-color-border); border-radius: 999px;
+  font-size: var(--rw-font-size); box-shadow: var(--rw-shadow-sm);
   cursor: pointer; white-space: nowrap; flex-shrink: 0; max-width: 200px;
   overflow: hidden; text-overflow: ellipsis; color: var(--rw-color-text);
   transition: all var(--rw-transition);
@@ -19,5 +20,6 @@
 
 .rw-minimized-window-item:hover {
   background: var(--rw-color-bg-active);
-  border-color: var(--rw-color-primary);
+  border-color: var(--rw-color-primary-border);
+  color: var(--rw-color-primary);
 }

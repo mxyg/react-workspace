@@ -13,8 +13,9 @@
   transition: background var(--rw-transition);
 }
 
+/* 用变量而不是写死的黑色半透明：暗色主题下「黑上加黑」等于没反馈。 */
 .rw-icon-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--rw-color-bg-hover);
   color: var(--rw-color-text);
 }
 
@@ -30,9 +31,18 @@
   background: var(--rw-color-bg);
   border: 1px solid var(--rw-color-border);
   border-radius: var(--rw-radius-lg);
-  box-shadow: 0 6px 16px var(--rw-color-shadow-light);
+  box-shadow: var(--rw-shadow-lg);
   z-index: 2000;
   padding: 4px;
+  /* 窗口清单可能很长，给个上限自己滚，别顶穿屏幕。 */
+  max-height: min(70vh, 480px);
+  overflow-y: auto;
+  max-width: 280px;
+  /* 字号和行高写死在这里，不继承宿主：标签栏 portal 到别人的顶栏之后，
+     菜单会跟着那边的排版走，条目会被撑得很大。 */
+  font-size: var(--rw-font-size);
+  line-height: 1.5;
+  text-align: left;
 }
 
 .rw-dropdown-item {
@@ -78,3 +88,16 @@
 
 .rw-empty-icon { color: var(--rw-color-border-strong); margin-bottom: 16px; }
 .rw-empty-desc { font-size: var(--rw-font-size); }
+
+/* 「更多」里那份已打开窗口清单。 */
+.rw-dropdown-window { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.rw-dropdown-window-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rw-dropdown-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--rw-color-border-strong); flex-shrink: 0;
+}
+.rw-dropdown-dot.active { background: var(--rw-color-primary); }
+.rw-dropdown-tag {
+  margin-left: auto; flex-shrink: 0;
+  font-size: var(--rw-font-size-sm); color: var(--rw-color-text-muted);
+}

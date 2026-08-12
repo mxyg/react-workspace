@@ -18,6 +18,10 @@ export interface WindowTabsProps {
   onFloatWindow?: (windowId: string, mousePosition?: { x: number; y: number }) => void;
   onRestoreWindow?: (windowId: string, insertIndex?: number) => void;
   onReorderWindows?: (fromIndex: number, toIndex: number) => void;
+  /** 被 portal 到宿主顶栏里渲染时置 true：去掉自身底色和下边框，融进那一行 */
+  embedded?: boolean;
+  /** 主题 class（如 rw-theme-dark）。portal 出去之后拿不到工作区身上的那份，要自己带 */
+  themeClassName?: string;
   allWindows?: WindowConfig[];
 }
 
@@ -31,6 +35,8 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
   onFloatWindow,
   onRestoreWindow,
   onReorderWindows,
+  embedded = false,
+  themeClassName,
   allWindows = windows,
 }) => {
   const activeIndex = windows.findIndex((w) => w.id === activeWindowId);
@@ -123,6 +129,21 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
     [onFloatWindow, onReorderWindows, calcInsertIndex],
   );
 
+  // 切换/新开窗口后，把激活的那个标签滚进可视区。
+  //
+  // 标签一多就会横向溢出，新开的窗口往往落在看不见的地方 —— 用户不知道
+  // 标签栏能左右拖/滚，只会觉得「点了没反应」。behavior 用 smooth 是有意的：
+  // 瞬移过去人会找不到自己刚开的是哪一个，滑过去能带着视线走。
+  useEffect(() => {
+    if (!activeWindowId) return;
+    const list = tabListRef.current;
+    if (!list) return;
+    const idx = windows.findIndex((w) => w.id === activeWindowId);
+    if (idx < 0) return;
+    const el = list.querySelectorAll('.rw-tab-item')[idx] as HTMLElement | undefined;
+    el?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  }, [activeWindowId, windows.length]);
+
   // 浮动窗口拖回标签栏
   useEffect(() => {
     let rafId: number | null = null;
@@ -152,6 +173,36 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
     };
   }, [calcInsertIndex]);
 
+  /** 标签页列表；拖动中把预览块插到当前落点上。 */
+  const renderTabsWithPreview = () => {
+    const items = windows.map((win, index) => (
+      <div
+        key={win.id}
+        className={`rw-tab-item ${win.id === activeWindowId ? 'active' : ''}`}
+        onClick={() => onSwitchWindow(win.id)}
+        onMouseDown={(e) => handleTabMouseDown(e, win.id, index)}
+      >
+        <span className="rw-tab-title">{win.title}</span>
+        <button
+          type="button"
+          title="关闭"
+          className="rw-icon-btn rw-window-tab-close-btn"
+          onClick={(e) => { e.stopPropagation(); onCloseWindow(win.id); }}
+        >
+          <IconClose size={12} />
+        </button>
+      </div>
+    ));
+
+    if (floatPreview && reorderInsertIndex !== null) {
+      const at = Math.max(0, Math.min(reorderInsertIndex, items.length));
+      items.splice(at, 0, (
+        <div key="rw-preview" className="rw-tab-preview">{floatPreview.title}</div>
+      ));
+    }
+    return items;
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     try {
@@ -174,7 +225,32 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
     setReorderInsertIndex(null);
   };
 
+  // 「更多」里先列出所有已打开的窗口，再是批量操作。
+  //
+  // 标签栏放不下时，滚出去的那些等于消失了；最小化的窗口更是只在最小化条上，
+  // 一眼扫不到。这里给一份完整清单：点一下就跳过去，不用先找到那个标签。
+  const windowItems: DropdownItem[] = allWindows.length === 0 ? [] : [
+    ...allWindows.map((w) => ({
+      key: `win-${w.id}`,
+      label: (
+        <span className="rw-dropdown-window">
+          <span className={`rw-dropdown-dot ${w.id === activeWindowId ? 'active' : ''}`} />
+          <span className="rw-dropdown-window-title">{w.title}</span>
+          {w.minimized && <span className="rw-dropdown-tag">已最小化</span>}
+          {w.floating && !w.minimized && <span className="rw-dropdown-tag">浮动</span>}
+        </span>
+      ),
+      onClick: () => {
+        // 最小化的先还原，否则「跳过去」只会换个激活 id、屏幕上什么都不动。
+        if (w.minimized) onRestoreWindow?.(w.id);
+        onSwitchWindow(w.id);
+      },
+    })),
+    { key: 'd0', label: '', divider: true },
+  ];
+
   const batchItems: DropdownItem[] = [
+    ...windowItems,
     { key: 'close-others', label: '关闭其他', disabled: windows.length <= 1, onClick: () => onBatchManage('close-others') },
     { key: 'close-left', label: '关闭左侧', disabled: activeIndex <= 0, onClick: () => onBatchManage('close-left') },
     { key: 'close-right', label: '关闭右侧', disabled: activeIndex < 0 || activeIndex >= windows.length - 1, onClick: () => onBatchManage('close-right') },
@@ -189,7 +265,7 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
 
   return (
     <div
-      className="rw-window-tabs"
+      className={`rw-window-tabs ${embedded ? 'rw-tabs-embedded' : ''} ${themeClassName || ''}`}
       ref={tabsContainerRef}
       onDragOver={handleDragOver}
       onDragLeave={() => { setFloatPreview(null); setReorderInsertIndex(null); }}
@@ -197,29 +273,13 @@ export const WindowTabs: React.FC<WindowTabsProps> = ({
     >
       <div className="rw-window-tabs-container">
         <div className="rw-tab-list" ref={tabListRef}>
-          {windows.map((win, index) => (
-            <div
-              key={win.id}
-              className={`rw-tab-item ${win.id === activeWindowId ? 'active' : ''}`}
-              onClick={() => onSwitchWindow(win.id)}
-              onMouseDown={(e) => handleTabMouseDown(e, win.id, index)}
-            >
-              <span className="rw-tab-title">{win.title}</span>
-              <button
-                type="button"
-                title="关闭"
-                className="rw-icon-btn rw-window-tab-close-btn"
-                onClick={(e) => { e.stopPropagation(); onCloseWindow(win.id); }}
-              >
-                <IconClose size={12} />
-              </button>
-            </div>
-          ))}
-          {floatPreview && reorderInsertIndex !== null && (
-            <div className="rw-tab-preview" style={{ order: reorderInsertIndex }}>
-              {floatPreview.title}
-            </div>
-          )}
+          {/*
+            预览块按插入位置**插进数组里**，而不是靠 CSS order 排。
+            order 只在同一个 flex 容器内比较，而所有标签页都是默认的 order: 0，
+            预览块拿到任何值都排在它们后面 —— 于是拖到哪儿预览都贴在最右边，
+            松手后位置却是对的（落点走的是 calcInsertIndex，跟预览不是一套逻辑）。
+          */}
+          {renderTabsWithPreview()}
         </div>
 
         {reorderInsertIndex !== null && !floatPreview && (

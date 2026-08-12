@@ -42,6 +42,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
     themeClassName,
     theme,
     renderSidebar,
+    tabsContainer,
     className,
     style,
   },
@@ -171,6 +172,8 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
               onFocusWindow={focusWindow}
               onReorderWindows={reorderWindows}
               emptyDescription={emptyDescription}
+              tabsContainer={tabsContainer}
+              themeClassName={themeClassName}
               floatingDefaults={floatingDefaults}
             />
           </Spinner>

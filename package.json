@@ -1,6 +1,6 @@
 {
   "name": "@liuman/react-workspace",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Zero-dependency React IDE-like multi-window workspace with tabs, floating windows, theming, and optional Ant Design integration",
   "type": "module",
   "main": "./dist/react-workspace.cjs",
@@ -32,7 +32,7 @@
     "build:demo": "vite build --config demo/vite.config.ts",
     "dev:demo": "vite --config demo/vite.config.ts",
     "type-check": "tsc --noEmit",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "react",

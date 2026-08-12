@@ -3,9 +3,10 @@
   left: 0;
   top: 0;
   background: var(--rw-color-bg);
-  border: 1px solid var(--rw-color-border-strong);
-  border-radius: var(--rw-radius);
-  box-shadow: 0 4px 12px var(--rw-color-shadow);
+  border: 1px solid var(--rw-color-border);
+  border-radius: var(--rw-radius-lg);
+  /* 分层阴影：浮动窗口要明确「浮在上面」，单薄的一道投影撑不起来 */
+  box-shadow: var(--rw-shadow-lg);
   display: flex;
   flex-direction: column;
   z-index: var(--rw-floating-z-index);
@@ -16,7 +17,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 8px 10px 8px 14px;
   background: var(--rw-color-bg-secondary);
   border-bottom: 1px solid var(--rw-color-border);
   cursor: move;
@@ -25,12 +26,13 @@
 }
 
 .rw-floating-window-header:active { cursor: grabbing; }
-.rw-floating-window-title { flex: 1; font-weight: 500; color: var(--rw-color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rw-floating-window-title { flex: 1; font-weight: 500; font-size: var(--rw-font-size); color: var(--rw-color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rw-floating-window-actions { display: flex; gap: 4px; margin-left: 12px; }
 .rw-floating-window-content { flex: 1; overflow: auto; background: var(--rw-color-bg); }
 
 .rw-floating-window-resize-handle { position: absolute; z-index: 10; }
-.rw-floating-window-resize-handle:hover { background: rgba(24, 144, 255, 0.1); }
+/* 拉伸热区悬停时不再染蓝：窗口边缘忽然出现一片色块很干扰，光标形状已经足够提示。 */
+.rw-floating-window-resize-handle:hover { background: transparent; }
 .rw-floating-window-resize-nw { top: 0; left: 0; width: 20px; height: 20px; cursor: nwse-resize; }
 .rw-floating-window-resize-ne { top: 0; right: 0; width: 20px; height: 20px; cursor: nesw-resize; }
 .rw-floating-window-resize-sw { bottom: 0; left: 0; width: 20px; height: 20px; cursor: nesw-resize; }

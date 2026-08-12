@@ -6,6 +6,7 @@ import React from 'react';
 import { EmptyState } from '../ui/EmptyState';
 import type { WindowConfig, WindowPosition, WindowRenderContext, BatchWindowAction, FloatingWindowDefaults } from '../types';
 import WindowContainer from './WindowContainer';
+import { createPortal } from 'react-dom';
 import WindowTabs from './WindowTabs';
 import FloatingWindow from './FloatingWindow';
 import '../styles/window-manager.css';
@@ -27,6 +28,10 @@ export interface WindowManagerProps {
   onReorderWindows?: (fromIndex: number, toIndex: number) => void;
   emptyDescription?: React.ReactNode;
   floatingDefaults?: FloatingWindowDefaults;
+  /** 标签栏的外部挂载点，见 WorkspaceProps.tabsContainer */
+  tabsContainer?: HTMLElement | null;
+  /** 主题 class，portal 出去的标签栏要自己带一份 */
+  themeClassName?: string;
 }
 
 export const WindowManager: React.FC<WindowManagerProps> = ({
@@ -44,6 +49,8 @@ export const WindowManager: React.FC<WindowManagerProps> = ({
   onReorderWindows,
   emptyDescription = '从左侧菜单选择功能开始工作',
   floatingDefaults,
+  tabsContainer,
+  themeClassName,
 }) => {
   if (windows.length === 0) {
     return (
@@ -57,20 +64,28 @@ export const WindowManager: React.FC<WindowManagerProps> = ({
   const floatingWindows = windows.filter((w) => w.floating && !w.minimized);
   const normalWindows = windows.filter((w) => !w.minimized && !w.floating);
 
+  const tabs = (
+    <WindowTabs
+      windows={normalWindows}
+      activeWindowId={activeWindowId}
+      onSwitchWindow={onSwitchWindow}
+      onCloseWindow={onCloseWindow}
+      onToggleMinimize={onToggleMinimize}
+      onBatchManage={onBatchManage}
+      onFloatWindow={onFloatWindow}
+      onRestoreWindow={onRestoreWindow}
+      onReorderWindows={onReorderWindows}
+      allWindows={windows}
+      embedded={!!tabsContainer}
+      themeClassName={themeClassName}
+    />
+  );
+
   return (
     <div className="rw-window-manager">
-      <WindowTabs
-        windows={normalWindows}
-        activeWindowId={activeWindowId}
-        onSwitchWindow={onSwitchWindow}
-        onCloseWindow={onCloseWindow}
-        onToggleMinimize={onToggleMinimize}
-        onBatchManage={onBatchManage}
-        onFloatWindow={onFloatWindow}
-        onRestoreWindow={onRestoreWindow}
-        onReorderWindows={onReorderWindows}
-        allWindows={windows}
-      />
+      {/* 宿主给了挂载点就把标签栏 portal 过去（通常是它自己的顶栏），
+          省掉「顶栏一行 + 标签栏一行」的双横杠。没给就照旧放在内容区上方。 */}
+      {tabsContainer ? createPortal(tabs, tabsContainer) : tabs}
 
       <div className="rw-window-content-area">
         {normalWindows.map((win) => (

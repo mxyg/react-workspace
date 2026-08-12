@@ -17,15 +17,15 @@
 ## 安装
 
 ```bash
-yarn add @liuman/react-workspace
+npm install @liuman/react-workspace
 ```
 
 ### Peer Dependencies
 
 ```bash
-yarn add react react-dom
+npm install react react-dom
 # URL 同步（可选）
-yarn add react-router-dom
+npm install react-router-dom
 ```
 
 ## 快速开始
@@ -33,7 +33,7 @@ yarn add react-router-dom
 ### 开箱即用（Ant Design，推荐）
 
 ```bash
-yarn add @liuman/react-workspace antd @ant-design/icons
+npm install @liuman/react-workspace antd @ant-design/icons
 ```
 
 ```tsx
@@ -162,7 +162,7 @@ Props 与 `Workspace` 相同（除 `renderSidebar` / `theme` / `themeClassName`�
 库核心**零 antd 依赖**，但可无缝配合 Ant Design 使用：
 
 ```bash
-yarn add @liuman/react-workspace antd @ant-design/icons
+npm install @liuman/react-workspace antd @ant-design/icons
 ```
 
 #### 1. 主题同步（推荐）
@@ -255,8 +255,8 @@ renderWindow={(window) => {
 
 ```bash
 cd packages/react-workspace
-yarn dev:demo    # 开发
-yarn build:demo  # 构建
+npm run dev:demo    # 开发
+npm run build:demo  # 构建
 ```
 
 ### `useWorkspaceContext`
@@ -377,9 +377,9 @@ interface SidebarMenuItem {
 
 ```bash
 cd packages/react-workspace
-yarn install
-yarn build
-yarn type-check
+npm install
+npm run build
+npm run type-check
 ```
 
 ## 发布到 GitHub
@@ -481,14 +481,14 @@ npm login
 # 2. package.json 包名为 @liuman/react-workspace（react-workspace 已被他人占用）
 
 # 3. 发布（需已开启 2FA，并带 OTP）
-yarn build
+npm run build
 npm publish --access public --otp=你的6位验证码
 ```
 
 安装方式：
 
 ```bash
-yarn add @liuman/react-workspace
+npm install @liuman/react-workspace
 ```
 
 ---

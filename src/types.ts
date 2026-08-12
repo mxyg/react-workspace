@@ -204,6 +204,15 @@ export interface WorkspaceProps {
   onReady?: (api: WorkspaceRef) => void;
   /** 暴露 ref */
   ref?: Ref<WorkspaceRef>;
+  /**
+   * 把标签栏渲染到工作区外部的某个容器里（传 DOM 节点，内部用 portal 挂过去）。
+   *
+   * 用途是省掉一整行：宿主应用自己有顶栏时，标签栏另起一行会让屏幕上出现
+   * 两条横杠。给顶栏里放一个空 div、把它传进来，标签栏就落在顶栏那一行，
+   * 拖拽排序、拖出浮窗、批量管理这些交互仍然由工作区自己管。
+   * 传 null / 不传则照旧渲染在内容区上方。
+   */
+  tabsContainer?: HTMLElement | null;
   /** 侧边栏宽度 */
   siderWidth?: number;
   /** 内容区背景色 */
