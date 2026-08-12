@@ -134,7 +134,14 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
 
   const bg = contentBackground ?? 'var(--rw-color-bg-tertiary)';
   const themeStyle = theme ? themeToCssVars(theme) : undefined;
-  const rootStyle = { minHeight: '100vh', height: '100vh', display: 'flex' as const, ...themeStyle, ...style };
+  // 高度只写 display，不写 100vh。
+  //
+  // 内联样式的优先级压过样式表，写死 100vh 就等于「无论宿主给多少空间，
+  // 我都要一整屏那么高」—— 宿主自己有顶栏时，工作区高出顶栏那一截，
+  // 最后一段内容被顶到可视区外面，滚到底也看不全，而且使用者改 CSS 还压不住。
+  // 高度交给样式表里的 height:100%（填满父元素），要占满整屏由宿主给父容器
+  // 设 height:100vh。使用者传进来的 style 仍然可以覆盖。
+  const rootStyle = { display: 'flex' as const, ...themeStyle, ...style };
 
   const sidebarProps: WorkspaceSidebarRenderProps = {
     menuItems,
