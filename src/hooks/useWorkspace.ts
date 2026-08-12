@@ -37,7 +37,10 @@ function mergeFloatingDefaults(custom?: FloatingWindowDefaults): Required<Floati
  *   老：[{"id":"window-…","type":"devices","title":"设备"}]
  * 老格式的链接可能已经被人存成书签或者发出去了，不该在升级之后变成一片空白。
  */
-function parseWindowsParam(raw: string): WindowConfig[] {
+function parseWindowsParam(
+  raw: string,
+  resolveTitle?: (type: string, props?: Record<string, unknown>) => string | undefined,
+): WindowConfig[] {
   // 老版本写进去的是 encodeURIComponent 过一次的 JSON，取出来还带着 %7B。
   let text = raw;
   if (text.trim().startsWith('%')) {
@@ -49,13 +52,15 @@ function parseWindowsParam(raw: string): WindowConfig[] {
   return list.map((raw0) => {
     const type = String(raw0.t ?? raw0.type ?? '');
     if (!type) throw new Error('窗口缺少类型');
+    const props = (raw0.p ?? raw0.props) as Record<string, unknown> | undefined;
+    // 标题优先由使用者/菜单推导；老格式的链接里写着标题，那就用它兜底。
+    const title = resolveTitle?.(type, props) ?? (raw0.n ?? raw0.title) ?? type;
     const w: WindowConfig = {
       id: typeof raw0.id === 'string' && raw0.id ? raw0.id : createWindowId(),
       type,
-      title: String(raw0.n ?? raw0.title ?? type),
+      title: String(title),
       minimized: false,
     };
-    const props = (raw0.p ?? raw0.props) as Record<string, unknown> | undefined;
     if (props && typeof props === 'object') w.props = props;
     return w;
   });
@@ -76,7 +81,11 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
     storageKeyPrefix = DEFAULT_STORAGE_PREFIX,
     floatingDefaults: floatingDefaultsOption,
     onWindowsChange,
+    resolveTitle,
   } = options;
+
+  const resolveTitleRef = useRef(resolveTitle);
+  resolveTitleRef.current = resolveTitle;
 
   const defaultWindowRef = useRef<DefaultWindowConfig>(
     defaultWindowOption ?? { type: 'home', title: '首页', minimized: false },
@@ -120,10 +129,13 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
    * 格式刻意做得短而且能读懂 —— URL 就是这个工作区的状态，它会被复制、
    * 粘进聊天窗口、存成书签，太长或者满屏 %25 会让人不敢用：
    *
-   *   ?windows=[{"t":"devices","n":"设备"},{"t":"member","n":"会员 #12","p":{"id":12}}]&active=1
+   *   ?windows=[{"t":"devices"},{"t":"member","p":{"id":12}}]&active=1
    *
-   *   t 窗口类型，n 标题，p 窗口参数（详情页的 id 之类，没有就不写）
+   *   t 窗口类型，p 窗口参数（详情页的 id 之类，没有就不写）
    *   active 是**下标**，不是 id
+   *
+   * 标题不写进 URL：它是中文，编码成 %E8%AE%BE%E5%A4%87 之后地址又长又没法读，
+   * 而它本来就能从菜单（或使用者给的 resolveTitle）推回来 —— URL 里只留键。
    *
    * 三处和老格式不同，都是有理由的：
    *  · 不写 id。id 带时间戳，本质是本次会话的内部标识，写进 URL 只会让地址
@@ -142,7 +154,7 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
 
       if (newWindows.length > 0) {
         params.set('windows', JSON.stringify(newWindows.map((w) => {
-          const item: { t: string; n: string; p?: Record<string, unknown> } = { t: w.type, n: w.title };
+          const item: { t: string; p?: Record<string, unknown> } = { t: w.type };
           if (w.props && Object.keys(w.props).length > 0) item.p = w.props;
           return item;
         })));
@@ -223,7 +235,7 @@ export function useWorkspace(options: UseWorkspaceOptions): UseWorkspaceReturn {
 
     if (windowsParam) {
       try {
-        const parsed = parseWindowsParam(windowsParam);
+        const parsed = parseWindowsParam(windowsParam, resolveTitleRef.current);
         if (parsed.length === 0) throw new Error('窗口列表是空的');
         const withState = parsed.map(restoreWindowState);
         // active 是下标；老格式里它是窗口 id，两种都认。

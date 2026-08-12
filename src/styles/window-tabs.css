@@ -14,6 +14,10 @@
   align-items: center;
   min-height: var(--rw-tab-height);
   position: relative;
+  /* flex 子项默认 min-width:auto，会「撑到装得下全部内容为止」，
+     于是标签一多整条标签栏就顶着旁边的东西走。这三处 min-width:0
+     是让它老实收缩、把溢出交给 .rw-tab-list 自己横向滚动的开关。 */
+  min-width: 0;
 }
 
 .rw-tab-list {
@@ -25,6 +29,7 @@
   gap: 2px;
   align-items: center;
   scrollbar-width: none;
+  min-width: 0;
 }
 .rw-tab-list::-webkit-scrollbar { display: none; }
 
@@ -137,5 +142,8 @@
   background: transparent;
   border-bottom: none;
   min-width: 0;
-  flex: 1;
+  /* 只占剩余空间，不因内容多而反过来撑大自己 —— 宿主顶栏右边还有状态灯
+     和头像那些东西，标签一多把它们挤出去或压到下一行就全乱了。 */
+  flex: 1 1 0;
+  overflow: hidden;
 }

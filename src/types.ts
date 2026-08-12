@@ -109,6 +109,14 @@ export interface UseWorkspaceOptions {
   floatingDefaults?: FloatingWindowDefaults;
   /** 窗口列表变化回调 */
   onWindowsChange?: (windows: WindowConfig[], activeWindowId: string | null) => void;
+  /**
+   * 从 URL 恢复窗口时，用什么标题。
+   *
+   * URL 里只存窗口类型和参数，不存标题（标题多半是中文，编码进地址又长又不可读）。
+   * 菜单里查得到的类型由工作区自己解析；详情类窗口这种「标题要按参数拼」的
+   * （比如「会员 #12」），由使用者在这里给。
+   */
+  resolveTitle?: (type: string, props?: Record<string, unknown>) => string | undefined;
 }
 
 /** useWorkspace 返回值 */
@@ -200,6 +208,11 @@ export interface WorkspaceProps {
   floatingDefaults?: FloatingWindowDefaults;
   /** 窗口列表变化回调 */
   onWindowsChange?: (windows: WindowConfig[], activeWindowId: string | null) => void;
+  /**
+   * 从 URL 恢复窗口时用什么标题。见 UseWorkspaceOptions.resolveTitle。
+   * 菜单里查得到的类型不用管，这里只负责详情类窗口那种按参数拼的标题。
+   */
+  resolveTitle?: (type: string, props?: Record<string, unknown>) => string | undefined;
   /** 工作区就绪回调，可获取完整 API */
   onReady?: (api: WorkspaceRef) => void;
   /** 暴露 ref */

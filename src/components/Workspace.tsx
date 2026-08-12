@@ -36,6 +36,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
     setSearchParams,
     floatingDefaults,
     onWindowsChange,
+    resolveTitle,
     onReady,
     siderWidth = 240,
     contentBackground,
@@ -68,6 +69,9 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
     setSearchParams,
     floatingDefaults,
     onWindowsChange,
+    // 恢复窗口标题：使用者给的优先（详情类窗口要按参数拼），
+    // 其次按类型去菜单里查，都查不到就退回类型本身。
+    resolveTitle: (type, props) => resolveTitle?.(type, props) ?? resolveWindowTitle(menuItems, type),
   });
 
   const {
