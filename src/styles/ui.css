@@ -23,16 +23,16 @@
 .rw-dropdown-trigger { cursor: pointer; display: inline-flex; align-items: center; }
 
 .rw-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 4px;
+  /* fixed + JS 定位：见 Dropdown.tsx。绝对定位会被 overflow:hidden 的顶栏裁掉。 */
+  position: fixed;
+  margin: 0;
   min-width: 140px;
   background: var(--rw-color-bg);
   border: 1px solid var(--rw-color-border);
   border-radius: var(--rw-radius-lg);
   box-shadow: var(--rw-shadow-lg);
-  z-index: 2000;
+  /* 高于浮动窗（1000）和常见 antd 浮层，否则内容区的表格/抽屉会盖上来。 */
+  z-index: 11000;
   padding: 4px;
   /* 窗口清单可能很长，给个上限自己滚，别顶穿屏幕。 */
   max-height: min(70vh, 480px);

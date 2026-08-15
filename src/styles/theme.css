@@ -9,7 +9,9 @@
 /* 标签栏可以被 portal 到工作区外面（宿主顶栏），那儿的元素拿不到
    .rw-workspace 上的变量 —— 背景色会变成透明、字号会继承宿主的。
    所以标签栏自己也带一份。 */
-.rw-window-tabs {
+.rw-window-tabs,
+/* 「更多」菜单再 portal 到 body，连标签栏的变量也拿不到。 */
+.rw-dropdown-menu {
   --rw-color-primary: #2563eb;
   --rw-color-primary-hover: #3b82f6;
   --rw-color-primary-bg: #eff6ff;
@@ -62,7 +64,8 @@
 /** 暗色主题 */
 .rw-workspace.rw-theme-dark,
 .rw-floating-window.rw-theme-dark,
-.rw-window-tabs.rw-theme-dark {
+.rw-window-tabs.rw-theme-dark,
+.rw-dropdown-menu.rw-theme-dark {
   --rw-color-primary: #60a5fa;
   --rw-color-primary-hover: #93c5fd;
   --rw-color-primary-bg: rgba(96, 165, 250, 0.16);

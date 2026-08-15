@@ -1,6 +1,6 @@
 {
   "name": "@liuman/react-workspace",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Zero-dependency React IDE-like multi-window workspace with tabs, floating windows, theming, and optional Ant Design integration",
   "type": "module",
   "main": "./dist/react-workspace.cjs",
